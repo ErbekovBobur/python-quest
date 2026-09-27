@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Python Quest Infinity</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <style>
 :root{--bg:#0b0f19;--bg2:#1a1d2e;--cyan:#00f2fe;--purple:#7928ca;--green:#00dfa2;--pink:#ff007a;--gold:#ffd166;--text:#e0e6f0;--muted:#8b93a7;--glass:rgba(26,29,46,.82);--glow:0 0 20px rgba(0,242,254,.35);--console-bg:#0a0e14;--error:#ff4d6d;--warn:#ffd166}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -121,6 +122,36 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,242,254,.3);border-radius:3px}
 @media(max-width:900px){#screen-mission{flex-direction:column}.mission-left,.mission-right{width:100%}.mission-left{height:55%;border-right:none;border-bottom:1px solid rgba(0,242,254,.15)}.mission-right{height:45%}.scene-area{max-height:30%;min-height:80px}.console-body{min-height:100px}.reward-grid{grid-template-columns:repeat(2,1fr)}}
 
+
+/* ===== v5: Line-based block editor & code editor ===== */
+.block-program{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:6px;background:rgba(0,0,0,.35);border:2px dashed rgba(0,242,254,.22);border-radius:10px;min-height:80px}
+.block-program.drag-over{border-color:var(--cyan);background:rgba(0,242,254,.06)}
+.block-line{display:flex;align-items:center;gap:4px;min-height:36px;padding:4px 6px;border-radius:8px;background:rgba(0,0,0,.2);border:1px solid transparent;transition:border-color .15s}
+.block-line:hover{border-color:rgba(0,242,254,.25)}
+.block-line.active{border-color:var(--cyan);background:rgba(0,242,254,.06)}
+.block-line-num{width:22px;text-align:right;font-size:.72rem;color:var(--muted);flex-shrink:0;font-family:Consolas,Monaco,monospace}
+.block-line-indent{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.indent-marker{width:16px;height:20px;border-left:2px solid rgba(121,40,202,.5);margin-left:4px}
+.block-line-tokens{display:flex;flex-wrap:wrap;gap:4px;flex:1;align-items:center;min-height:28px}
+.block-line-tokens .block{cursor:grab}
+.block-line-actions{display:flex;gap:2px;flex-shrink:0;opacity:.5}
+.block-line:hover .block-line-actions{opacity:1}
+.block-line-actions button{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:2px 4px;border-radius:4px}
+.block-line-actions button:hover{color:var(--cyan);background:rgba(0,242,254,.1)}
+.add-line-btn{margin-top:6px;align-self:flex-start;font-size:.78rem;padding:6px 12px}
+.pedagogy-tip{font-size:.78rem;color:var(--muted);padding:6px 10px;background:rgba(121,40,202,.1);border-radius:8px;margin-bottom:6px;line-height:1.4;border-left:3px solid var(--purple)}
+.pedagogy-tip strong{color:var(--cyan)}
+.code-editor-wrap{flex:1;display:flex;min-height:0;border:1px solid rgba(0,242,254,.2);border-radius:8px;overflow:hidden;background:#0d1117}
+.code-gutter{width:36px;background:#0a0e14;border-right:1px solid rgba(0,242,254,.12);padding:10px 0;font-family:Consolas,Monaco,monospace;font-size:.85rem;line-height:1.5;color:var(--muted);text-align:right;user-select:none;overflow:hidden;flex-shrink:0}
+.code-gutter div{padding-right:8px;height:1.5em}
+#code-editor{flex:1;background:transparent;border:none;border-radius:0;color:#e6edf3;font-family:Consolas,Monaco,monospace;font-size:.92rem;padding:10px 12px;resize:none;outline:none;line-height:1.5;min-height:100px;tab-size:4;white-space:pre;overflow:auto}
+.sync-indicator{font-size:.72rem;padding:2px 8px;border-radius:8px;display:inline-flex;align-items:center;gap:4px}
+.sync-indicator.synced{color:var(--green)}.sync-indicator.saving{color:var(--cyan)}.sync-indicator.offline{color:var(--warn)}.sync-indicator.error{color:var(--error)}
+.btn-check{background:linear-gradient(135deg,#7928ca,#ff007a);color:#fff}
+.btn-check:hover{transform:translateY(-2px)}
+.btn-check:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.assembly-placeholder{color:var(--muted);font-size:.82rem;width:100%;text-align:center;padding:16px;pointer-events:none}
+
 /* ===== Commercial polish & educational enhancements ===== */
 .block-palette{position:relative}
 .block-palette::before{content:"Блоки можно использовать многократно ✨";display:block;font-size:.65rem;color:var(--muted);margin-bottom:6px;width:100%}
@@ -152,7 +183,23 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 .mission-header{backdrop-filter:blur(12px)}
 @media(max-width:900px){.block-palette::before{font-size:.6rem}}
 
+
+@media(max-width:900px){
+  .block-line{flex-wrap:wrap;min-height:44px}
+  .block-line-tokens{min-height:36px}
+  .block-line-actions{opacity:1}
+  .block-line-actions button{padding:6px 8px;font-size:.9rem}
+  .add-line-btn{padding:10px 14px;font-size:.88rem;min-height:44px}
+  .code-editor-wrap{min-height:140px}
+  #code-editor{font-size:16px;min-height:120px}
+  .actions{gap:6px}
+  .actions .btn{flex:1 1 auto;min-height:44px;justify-content:center}
+  .pedagogy-tip{font-size:.75rem}
+}
+
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -173,9 +220,13 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
       <button class="btn btn-primary btn-lg" onclick="showMap()">▶ Приключение</button>
       <button class="btn btn-ghost" onclick="showDashboard()">📊 Мой прогресс</button>
     </div>
-    <div style="margin-top:14px">
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center">
       <button class="btn btn-ghost btn-sm" onclick="toggleSound()" id="btn-sound">🔊 Звук</button>
-      <button class="btn btn-ghost btn-sm" onclick="resetProgress()">Сбросить</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetProgress()" disabled>Сбросить</button>
+      <button class="btn btn-ghost btn-sm" id="btn-login" onclick="openLoginModal()">🔐 Войти</button>
+      <button class="btn btn-ghost btn-sm" id="btn-logout" onclick="logoutStudent()" style="display:none">🚪 Выйти</button>
+      <span id="auth-status" style="font-size:.75rem;color:var(--muted)"></span>
+      <span class="sync-indicator synced" id="sync-indicator" title="Статус синхронизации">☁ Локально</span>
     </div>
   </div>
 </div>
@@ -230,20 +281,26 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
     <div class="workspace">
       <div class="mode-label" id="mode-label">Собери код из блоков <span class="reuse-badge">∞ блоки можно использовать многократно</span></div>
       <div id="block-area" style="display:flex;flex-direction:column;flex:1;min-height:0">
+        <div class="pedagogy-tip" id="pedagogy-tip" style="display:none"></div>
         <div class="block-palette" id="block-palette"></div>
-        <div class="assembly" id="assembly" ondragover="onAssemblyDragOver(event)" ondrop="onAssemblyDrop(event)" ondragleave="onAssemblyDragLeave(event)">
-          <div class="assembly-placeholder" id="assembly-ph">Кликни или перетащи блоки сюда · блоки бесконечные</div>
+        <div class="block-program" id="block-program" role="list" aria-label="Твой код по строкам">
+          <div class="assembly-placeholder" id="assembly-ph">Кликни блок или нажми «＋ Строка» · каждая строка = одна команда</div>
         </div>
+        <button class="btn btn-ghost btn-sm add-line-btn" id="btn-add-line" onclick="BlockEditor.addLine()" aria-label="Добавить новую строку">＋ Новая строка</button>
         <div class="code-preview empty" id="code-preview">Твой код появится здесь...</div>
       </div>
       <div id="editor-area" style="display:none;flex:1;flex-direction:column;min-height:0">
-        <textarea id="code-editor" placeholder="# Пиши Python-код здесь..." spellcheck="false"></textarea>
+        <div class="code-editor-wrap">
+          <div class="code-gutter" id="code-gutter"><div>1</div></div>
+          <textarea id="code-editor" placeholder="# Пиши Python-код здесь..." spellcheck="false" aria-label="Редактор Python-кода"></textarea>
+        </div>
       </div>
       <div class="hints-row" id="hints-row"></div>
     </div>
     <div class="actions">
-      <button class="btn btn-primary" id="btn-run" onclick="runCode()">▶ Запустить</button>
-      <button class="btn btn-success" id="btn-complete" onclick="completeMission()" disabled>✓ Завершить</button>
+      <button class="btn btn-primary" id="btn-run" onclick="runCode()" aria-label="Запустить код">▶ Запустить</button>
+      <button class="btn btn-check" id="btn-check" onclick="checkMission()" disabled aria-label="Проверить задание">✓ Проверить задание</button>
+      <button class="btn btn-success" id="btn-complete" onclick="completeMission()" disabled aria-label="Завершить миссию">★ Завершить</button>
       <button class="btn btn-ghost btn-sm" onclick="resetWorkspace()">↺ Сброс</button>
     </div>
   </div>
@@ -281,6 +338,31 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
   <div class="name" id="ach-popup-name"></div>
   <div class="desc" id="ach-popup-desc"></div>
 </div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal" style="max-width:380px">
+    <div style="font-size:2rem;margin-bottom:8px">🔐</div>
+    <h2 style="margin-bottom:4px">Вход ученика</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Войдите, чтобы сохранять прогресс в облаке</p>
+    <div style="text-align:left;margin-bottom:12px">
+      <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px">Логин</label>
+      <input id="login-input" type="text" autocomplete="username" placeholder="логин"
+        style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,242,254,.25);background:rgba(0,0,0,.35);color:var(--text);font-size:.95rem;outline:none">
+    </div>
+    <div style="text-align:left;margin-bottom:12px;position:relative">
+      <label style="font-size:.72rem;color:var(--muted);display:block;margin-bottom:4px">Пароль</label>
+      <input id="password-input" type="password" autocomplete="current-password" placeholder="пароль"
+        style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,242,254,.25);background:rgba(0,0,0,.35);color:var(--text);font-size:.95rem;outline:none">
+    </div>
+    <p id="login-error" style="color:var(--error);font-size:.8rem;min-height:1.2em;margin-bottom:10px"></p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeLoginModal()">Отмена</button>
+      <button class="btn btn-primary" style="flex:1" id="login-submit-btn" onclick="submitLogin()">Войти</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -319,7 +401,7 @@ const WORLD_META=[
 {id:30,name:"Cyber Architect Citadel",theme:"финал",emoji:"🏰",skill:"mastery"}
 ];
 const SKILL_KEYS=["print","variables","input","math","conditions","loops","lists","strings","functions","dictionaries"];
-function countWorldDone(w){return Object.keys(state.completed).filter(k=>k.startsWith("w"+w+"m")).length}
+function countWorldDone(w){return Object.keys(state.completed||{}).filter(k=>k.startsWith("w"+w+"m")).length}
 
 const ACHIEVEMENTS=[
 {id:"first_code",title:"Первый код",desc:"Выполни первую миссию",icon:"🎯",rarity:"Common",reward:{coins:20},check:s=>s.stats.missionsCompleted>=1},
@@ -337,14 +419,546 @@ const ACHIEVEMENTS=[
 {id:"coins_500",title:"Богач",desc:"Накопи 500 coins",icon:"🪙",rarity:"Rare",reward:{crystals:10},check:s=>s.coins>=500}
 ];
 
-const SaveManager={
-key:"pqi_v2",
-default(){return{xp:0,coins:0,crystals:0,stars:0,unlockedWorld:1,completed:{},missions:{},mastery:Object.fromEntries(SKILL_KEYS.map(k=>[k,0])),achievements:[],streak:0,lastPlay:null,bestStreak:0,stats:{totalAttempts:0,successfulAttempts:0,errors:0,hintsUsed:0,missionsCompleted:0,firstTryWins:0,noHintWins:0,noErrorWins:0,speedWins:0,persistentWins:0,bossesDefeated:0,perfectWorlds:0},settings:{sound:true}}},
-load(){try{const raw=localStorage.getItem(this.key);if(!raw){const old=localStorage.getItem("pqi_save_v1");if(old){const o=JSON.parse(old);const d=this.default();d.xp=o.xp||0;d.crystals=o.crystals||0;d.stars=o.stars||0;d.unlockedWorld=o.unlockedWorld||1;d.completed=o.completed||{};return d}return this.default()}return Object.assign(this.default(),JSON.parse(raw))}catch(e){return this.default()}},
-save(d){localStorage.setItem(this.key,JSON.stringify(d))},
-getRank(xp){let r=RANKS[0];for(const rank of RANKS)if(xp>=rank.xp)r=rank;return r}
+
+/* ============================================================================
+   STATE ARCHITECTURE v5
+   AUTH STATE | PLAYER STATE | MISSION SESSION | UI STATE
+   Source of truth: Supabase. localStorage = student-scoped cache only.
+============================================================================ */
+
+const SCHEMA_VERSION = 2;
+
+const SaveManager = {
+  default() {
+    return {
+      schemaVersion: SCHEMA_VERSION,
+      studentId: null,
+      updatedAt: null,
+      xp: 0, coins: 0, crystals: 0, stars: 0,
+      unlockedWorld: 1,
+      completed: {},
+      missions: {},
+      mastery: Object.fromEntries(SKILL_KEYS.map(k => [k, 0])),
+      achievements: [],
+      streak: 0, lastPlay: null, bestStreak: 0,
+      stats: {
+        totalAttempts: 0, successfulAttempts: 0, errors: 0, hintsUsed: 0,
+        missionsCompleted: 0, firstTryWins: 0, noHintWins: 0, noErrorWins: 0,
+        speedWins: 0, persistentWins: 0, bossesDefeated: 0, perfectWorlds: 0
+      },
+      settings: { sound: true }
+    };
+  },
+  migrate(raw) {
+    const d = Object.assign(this.default(), raw || {});
+    d.schemaVersion = SCHEMA_VERSION;
+    if (!d.stats) d.stats = this.default().stats;
+    if (!d.mastery) d.mastery = this.default().mastery;
+    if (!d.settings) d.settings = { sound: true };
+    if (!d.completed) d.completed = {};
+    if (!d.missions) d.missions = {};
+    if (!d.achievements) d.achievements = [];
+    return d;
+  },
+  cacheKey(studentId) {
+    return studentId ? ("pqi_player_" + studentId) : null;
+  },
+  loadCache(studentId) {
+    if (!studentId) return null;
+    try {
+      const raw = localStorage.getItem(this.cacheKey(studentId));
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data.studentId && data.studentId !== studentId) return null;
+      return this.migrate(data);
+    } catch (e) { return null; }
+  },
+  saveCache(studentId, data) {
+    if (!studentId) return;
+    try {
+      const payload = Object.assign({}, data, {
+        studentId: studentId,
+        schemaVersion: SCHEMA_VERSION,
+        updatedAt: new Date().toISOString()
+      });
+      localStorage.setItem(this.cacheKey(studentId), JSON.stringify(payload));
+    } catch (e) { console.warn("cache save failed", e); }
+  },
+  clearCache(studentId) {
+    if (!studentId) return;
+    try { localStorage.removeItem(this.cacheKey(studentId)); } catch (e) {}
+  },
+  clearLegacyKeys() {
+    try {
+      localStorage.removeItem("pqi_v2");
+      localStorage.removeItem("pqi_save_v1");
+      // do NOT remove other students' pqi_player_* keys here
+    } catch (e) {}
+  },
+  getRank(xp) {
+    let r = RANKS[0];
+    for (const rank of RANKS) if (xp >= rank.xp) r = rank;
+    return r;
+  }
 };
-let state=SaveManager.load();
+
+/* ---- AUTH STATE ---- */
+const AuthState = {
+  currentStudent: null,
+  isAuthenticated: false,
+  authLoading: false
+};
+
+/* ---- PLAYER STATE (source of truth after login = cloud) ---- */
+let state = SaveManager.default();
+
+/* ---- MISSION SESSION (ephemeral, destroyed on logout/exit) ---- */
+const MissionSession = {
+  currentWorld: 1,
+  currentMission: 1,
+  missionState: null,
+  programLines: [],   // [{indent:0, tokens:[]}, ...]
+  activeLineIdx: 0,
+  dragSrc: null,
+  timerInterval: null,
+  clear() {
+    this.stopTimer();
+    this.missionState = null;
+    this.programLines = [];
+    this.activeLineIdx = 0;
+    this.dragSrc = null;
+    this.currentWorld = 1;
+    this.currentMission = 1;
+    const ed = document.getElementById("code-editor");
+    if (ed) ed.value = "";
+    const gut = document.getElementById("code-gutter");
+    if (gut) gut.innerHTML = "<div>1</div>";
+  },
+  stopTimer() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+};
+
+/* Aliases for compatibility with existing call sites */
+let currentWorld = 1, currentMission = 1, missionState = null;
+function syncSessionAliases() {
+  currentWorld = MissionSession.currentWorld;
+  currentMission = MissionSession.currentMission;
+  missionState = MissionSession.missionState;
+}
+
+/* ---- CLOUD SAVE MANAGER ---- */
+const SUPABASE_URL = "https://hlvlcrkdmlfgynwahqwi.supabase.co";
+const SUPABASE_KEY = "sb_publishable_4BrlFeyAjXbhRrq_ID0V-w_iiLzkNsQ";
+let supabaseClient = null;
+
+const CloudSaveManager = {
+  uploadTimer: null,
+  lastSyncAt: null,
+  status: "idle", // idle | saving | synced | offline | error
+  ownerId: null,  // student id this save belongs to
+  cancelled: false,
+
+  init() {
+    try {
+      if (window.supabase && window.supabase.createClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      }
+    } catch (e) { console.warn("Supabase init failed", e); }
+  },
+
+  setStatus(s) {
+    this.status = s;
+    const el = document.getElementById("sync-indicator");
+    if (!el) return;
+    el.className = "sync-indicator " + (s === "synced" ? "synced" : s === "saving" ? "saving" : s === "offline" ? "offline" : s === "error" ? "error" : "synced");
+    const labels = {
+      idle: "☁ Локально",
+      saving: "⟳ Сохранение...",
+      synced: "☁ Синхронизировано",
+      offline: "⚠ Нет соединения",
+      error: "✕ Ошибка синхронизации"
+    };
+    el.textContent = labels[s] || labels.idle;
+  },
+
+  cancelPending() {
+    this.cancelled = true;
+    if (this.uploadTimer) {
+      clearTimeout(this.uploadTimer);
+      this.uploadTimer = null;
+    }
+  },
+
+  scheduleUpload() {
+    if (!AuthState.currentStudent || !AuthState.isAuthenticated) return;
+    this.cancelled = false;
+    if (this.uploadTimer) clearTimeout(this.uploadTimer);
+    this.uploadTimer = setTimeout(() => this.upload(), 900);
+  },
+
+  async upload() {
+    if (this.cancelled) return;
+    const student = AuthState.currentStudent;
+    if (!student || !supabaseClient) return;
+    // Owner protection
+    if (this.ownerId && this.ownerId !== student.id) {
+      console.warn("CloudSave: owner mismatch, abort");
+      return;
+    }
+    if (!navigator.onLine) {
+      this.setStatus("offline");
+      return;
+    }
+    this.setStatus("saving");
+    const snapshot = JSON.parse(JSON.stringify(state));
+    snapshot.studentId = student.id;
+    snapshot.schemaVersion = SCHEMA_VERSION;
+    snapshot.updatedAt = new Date().toISOString();
+    const unlocked = [];
+    for (let i = 1; i <= (snapshot.unlockedWorld || 1); i++) unlocked.push(i);
+    try {
+      const { error } = await supabaseClient
+        .from("python_quest")
+        .update({
+          save_data: snapshot,
+          unlocked_modules: unlocked,
+          updated_at: snapshot.updatedAt
+        })
+        .eq("id", student.id);
+      if (this.cancelled) return;
+      if (error) throw error;
+      // Verify still same student
+      if (!AuthState.currentStudent || AuthState.currentStudent.id !== student.id) return;
+      this.lastSyncAt = Date.now();
+      this.setStatus("synced");
+      SaveManager.saveCache(student.id, snapshot);
+    } catch (e) {
+      console.error("uploadCloudSave", e);
+      if (!navigator.onLine) this.setStatus("offline");
+      else this.setStatus("error");
+    }
+  },
+
+  async download(studentId) {
+    if (!supabaseClient) this.init();
+    if (!supabaseClient || !studentId) return { error: "no_client" };
+    try {
+      const { data, error } = await supabaseClient
+        .from("python_quest")
+        .select("id,login,student_name,class,disabled,save_data,unlocked_modules")
+        .eq("id", studentId)
+        .maybeSingle();
+      if (error) return { error: "server", detail: error };
+      if (!data) return { error: "not_found" };
+      if (data.disabled) return { disabled: true };
+      return data;
+    } catch (e) {
+      console.warn("downloadCloudSave", e);
+      return { error: "network", detail: e };
+    }
+  }
+};
+
+function persistState() {
+  if (!AuthState.currentStudent || !AuthState.isAuthenticated) {
+    // Guest: keep in memory only — progress will not survive refresh
+    return;
+  }
+  // Owner guard
+  if (state.studentId && state.studentId !== AuthState.currentStudent.id) {
+    console.warn("persistState: studentId mismatch, refusing to save");
+    return;
+  }
+  state.studentId = AuthState.currentStudent.id;
+  state.updatedAt = new Date().toISOString();
+  state.schemaVersion = SCHEMA_VERSION;
+  SaveManager.saveCache(AuthState.currentStudent.id, state);
+  CloudSaveManager.scheduleUpload();
+}
+
+async function sha256hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(text)));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function openLoginModal() {
+  const m = document.getElementById("modal-login");
+  if (!m) return;
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("login-input").value = "";
+  document.getElementById("password-input").value = "";
+  m.classList.add("show");
+  setTimeout(() => document.getElementById("login-input").focus(), 100);
+}
+function closeLoginModal() {
+  const m = document.getElementById("modal-login");
+  if (m) m.classList.remove("show");
+}
+
+async function submitLogin() {
+  const login = (document.getElementById("login-input").value || "").trim();
+  const password = document.getElementById("password-input").value || "";
+  const errEl = document.getElementById("login-error");
+  errEl.textContent = "";
+  if (!login || !password) {
+    errEl.textContent = "Введите логин и пароль";
+    return;
+  }
+  AuthState.authLoading = true;
+  const res = await loginStudent(login, password);
+  AuthState.authLoading = false;
+  if (res && res.ok) {
+    closeLoginModal();
+    showToast("Добро пожаловать, " + (AuthState.currentStudent.student_name || login) + "!");
+    updateAuthUI();
+    updateHomeStats();
+    updateMapHud();
+  } else {
+    errEl.textContent = (res && res.error) || "Неверный логин или пароль";
+  }
+}
+
+async function loginStudent(login, password) {
+  // SAFE SEQUENCE: clear first, then auth, then load
+  clearPlayerState();
+  if (!supabaseClient) CloudSaveManager.init();
+  if (!supabaseClient) return { ok: false, error: "Нет подключения к облаку" };
+  const loginNorm = login.trim().toLowerCase();
+  const passHash = await sha256hex(password);
+  try {
+    // Demo-auth: still uses password column. Production should use Supabase Auth.
+    let { data, error } = await supabaseClient
+      .from("python_quest")
+      .select("id,login,student_name,class,disabled,save_data,unlocked_modules,password")
+      .eq("login", loginNorm)
+      .maybeSingle();
+    if (error) {
+      console.error(error);
+      return { ok: false, error: "Ошибка сервера" };
+    }
+    if (!data) return { ok: false, error: "Ученик не найден" };
+    if (data.disabled) return { ok: false, error: "Доступ закрыт администратором" };
+    const stored = String(data.password || "");
+    const match = (stored === password) || (stored === passHash) || (stored.toLowerCase() === passHash);
+    if (!match) return { ok: false, error: "Неверный пароль" };
+    if (stored === password) {
+      try {
+        await supabaseClient.from("python_quest").update({ password: passHash }).eq("id", data.id);
+      } catch (_) {}
+    }
+    // Set auth
+    AuthState.currentStudent = {
+      id: data.id,
+      login: data.login,
+      student_name: data.student_name,
+      class: data.class
+    };
+    AuthState.isAuthenticated = true;
+    CloudSaveManager.ownerId = data.id;
+    CloudSaveManager.cancelled = false;
+    localStorage.setItem("pqi_student_id", data.id);
+    localStorage.setItem("pqi_student_login", data.login);
+
+    // Load state: cloud first, else cache (validated), else default
+    let loaded = null;
+    if (data.save_data && typeof data.save_data === "object" && Object.keys(data.save_data).length) {
+      loaded = SaveManager.migrate(data.save_data);
+      loaded.studentId = data.id;
+      if (Array.isArray(data.unlocked_modules) && data.unlocked_modules.length) {
+        const maxU = Math.max(...data.unlocked_modules.map(Number).filter(n => !isNaN(n)));
+        if (maxU > (loaded.unlockedWorld || 1)) loaded.unlockedWorld = maxU;
+      }
+    } else {
+      const cached = SaveManager.loadCache(data.id);
+      if (cached && cached.studentId === data.id) loaded = cached;
+    }
+    if (!loaded) loaded = SaveManager.default();
+    loaded.studentId = data.id;
+    state = loaded;
+    SaveManager.saveCache(data.id, state);
+    CloudSaveManager.setStatus("synced");
+    return { ok: true };
+  } catch (e) {
+    console.error(e);
+    clearPlayerState();
+    return { ok: false, error: "Ошибка сети" };
+  }
+}
+
+function clearPlayerState() {
+  // 1. Stop timers
+  MissionSession.stopTimer();
+  // 2. Cancel pending cloud saves (after logout flush already ran)
+  CloudSaveManager.cancelPending();
+  CloudSaveManager.ownerId = null;
+  // 3-6. Destroy mission session completely
+  MissionSession.clear();
+  syncSessionAliases();
+  // Clear block program DOM
+  try {
+    const bp = document.getElementById("block-program");
+    if (bp) bp.innerHTML = '<div class="assembly-placeholder" id="assembly-ph">Кликни блок или нажми «＋ Строка»</div>';
+    const prev = document.getElementById("code-preview");
+    if (prev) { prev.className = "code-preview empty"; prev.textContent = "Твой код появится здесь..."; }
+    hidePedagogyTip();
+    clearConsole(true);
+  } catch (_) {}
+  // Close any open modals
+  try {
+    document.getElementById("modal")?.classList.remove("show");
+    document.getElementById("modal-world")?.classList.remove("show");
+    document.getElementById("modal-login")?.classList.remove("show");
+  } catch (_) {}
+  // 7. Clear current student cache so next user cannot read it
+  if (AuthState.currentStudent && AuthState.currentStudent.id) {
+    SaveManager.clearCache(AuthState.currentStudent.id);
+  }
+  const sid = localStorage.getItem("pqi_student_id");
+  if (sid) SaveManager.clearCache(sid);
+  // 8. Remove session identifiers
+  localStorage.removeItem("pqi_student_id");
+  localStorage.removeItem("pqi_student_login");
+  SaveManager.clearLegacyKeys();
+  // 9. Auth null
+  AuthState.currentStudent = null;
+  AuthState.isAuthenticated = false;
+  // 10. Reset player state — no previous student data remains in memory
+  state = SaveManager.default();
+  // 11. UI controls
+  CloudSaveManager.setStatus("idle");
+  try {
+    const bc = document.getElementById("btn-complete");
+    const bk = document.getElementById("btn-check");
+    if (bc) bc.disabled = true;
+    if (bk) bk.disabled = true;
+  } catch (_) {}
+}
+
+async function logoutStudent() {
+  // Best-effort final cloud flush BEFORE clearing (prevents progress loss)
+  try {
+    if (AuthState.currentStudent && AuthState.isAuthenticated) {
+      if (CloudSaveManager.uploadTimer) {
+        clearTimeout(CloudSaveManager.uploadTimer);
+        CloudSaveManager.uploadTimer = null;
+      }
+      CloudSaveManager.cancelled = false;
+      // Force immediate upload while owner still valid
+      await CloudSaveManager.upload();
+    }
+  } catch (e) {
+    console.warn("logout flush failed", e);
+  }
+  // Full safe logout — destroys in-memory + session + student cache
+  clearPlayerState();
+  updateAuthUI();
+  updateHomeStats();
+  updateMapHud();
+  showToast("Вы вышли из аккаунта");
+  showHome();
+}
+
+function updateAuthUI() {
+  const btnLogin = document.getElementById("btn-login");
+  const btnLogout = document.getElementById("btn-logout");
+  const status = document.getElementById("auth-status");
+  if (!btnLogin || !btnLogout) return;
+  if (AuthState.currentStudent) {
+    btnLogin.style.display = "none";
+    btnLogout.style.display = "inline-flex";
+    if (status) status.textContent = AuthState.currentStudent.student_name || AuthState.currentStudent.login || "Ученик";
+  } else {
+    btnLogin.style.display = "inline-flex";
+    btnLogout.style.display = "none";
+    if (status) status.textContent = "";
+  }
+}
+
+async function tryRestoreSession() {
+  const sid = localStorage.getItem("pqi_student_id");
+  if (!sid) {
+    state = SaveManager.default();
+    return;
+  }
+  if (!supabaseClient) CloudSaveManager.init();
+  const data = await CloudSaveManager.download(sid);
+
+  // Network/server error → try student-scoped cache (do NOT wipe session)
+  if (data && data.error) {
+    const cached = SaveManager.loadCache(sid);
+    if (cached && (!cached.studentId || cached.studentId === sid)) {
+      AuthState.currentStudent = {
+        id: sid,
+        login: localStorage.getItem("pqi_student_login") || "",
+        student_name: null,
+        class: null
+      };
+      AuthState.isAuthenticated = true;
+      CloudSaveManager.ownerId = sid;
+      CloudSaveManager.cancelled = false;
+      state = SaveManager.migrate(cached);
+      state.studentId = sid;
+      CloudSaveManager.setStatus(navigator.onLine ? "error" : "offline");
+      updateAuthUI();
+      updateHomeStats();
+      return;
+    }
+    // No usable cache → safe reset
+    clearPlayerState();
+    updateAuthUI();
+    return;
+  }
+
+  if (!data || data.disabled) {
+    clearPlayerState();
+    updateAuthUI();
+    return;
+  }
+
+  AuthState.currentStudent = {
+    id: data.id,
+    login: data.login,
+    student_name: data.student_name,
+    class: data.class
+  };
+  AuthState.isAuthenticated = true;
+  CloudSaveManager.ownerId = data.id;
+  CloudSaveManager.cancelled = false;
+  let loaded = null;
+  if (data.save_data && typeof data.save_data === "object" && Object.keys(data.save_data).length) {
+    loaded = SaveManager.migrate(data.save_data);
+    loaded.studentId = data.id;
+    if (Array.isArray(data.unlocked_modules) && data.unlocked_modules.length) {
+      const maxU = Math.max(...data.unlocked_modules.map(Number).filter(n => !isNaN(n)));
+      if (maxU > (loaded.unlockedWorld || 1)) loaded.unlockedWorld = maxU;
+    }
+  } else {
+    const cached = SaveManager.loadCache(data.id);
+    if (cached && cached.studentId === data.id) loaded = cached;
+  }
+  if (!loaded) loaded = SaveManager.default();
+  loaded.studentId = data.id;
+  state = loaded;
+  SaveManager.saveCache(data.id, state);
+  CloudSaveManager.setStatus("synced");
+  updateAuthUI();
+  updateHomeStats();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const li = document.getElementById("login-input");
+  const pi = document.getElementById("password-input");
+  if (li) li.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("password-input").focus(); });
+  if (pi) pi.addEventListener("keydown", e => { if (e.key === "Enter") submitLogin(); });
+  window.addEventListener("online", () => {
+    if (AuthState.isAuthenticated) CloudSaveManager.scheduleUpload();
+  });
+  window.addEventListener("offline", () => CloudSaveManager.setStatus("offline"));
+});
 
 
 const MISSIONS = {};
@@ -1766,214 +2380,1082 @@ PythonEngine.run = function(code, options) {
   return { status: "success", stdout: r.output || "", stderr: "", errorType: null, executionTime: 0, vars: r.vars || {} };
 };
 
-let currentWorld=1, currentMission=1, missionState=null, assembledBlocks=[], dragSrcIdx=null, timerInterval=null;
 
-function createMissionState(){return{startedAt:Date.now(),completedAt:null,durationSeconds:0,attempts:0,successfulAttempts:0,failedAttempts:0,errorsCount:0,hintsUsed:0,hintLevel:0,hint1Used:false,hint2Used:false,hint3Used:false,firstHintAt:null,lastHintAt:null,codeExecuted:false,objectiveCompleted:false,completed:false,bestOutput:"",lastError:null}}
+/* ============================================================================
+   BLOCK EDITOR — line-based program model
+   One command = one visual line. Indentation is explicit.
+============================================================================ */
+const BlockEditor = {
+  get lines() { return MissionSession.programLines; },
+  set lines(v) { MissionSession.programLines = v; },
 
-function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}if(a.length>2&&a.every((v,i)=>v===arr[i]))return shuffle(arr);return a}
+  initEmpty() {
+    this.lines = [{ indent: 0, tokens: [] }];
+    MissionSession.activeLineIdx = 0;
+    this.render();
+  },
 
-const RewardEngine={calc(m,ms){const base={easy:50,medium:75,hard:110,boss:200};let coins=base[m.difficulty]||50;let xp=m.difficulty==="easy"?15:m.difficulty==="medium"?25:m.difficulty==="hard"?40:60;let crystals=m.difficulty==="boss"?12:4;let stars=1;const bonuses=[];const firstTry=ms.attempts===1;const noErrors=ms.errorsCount===0;const noHints=ms.hintsUsed===0;const fast=ms.durationSeconds>0&&ms.durationSeconds<=30;if(firstTry){coins+=30;bonuses.push("First Try")}if(noErrors){coins+=25;bonuses.push("No Errors")}if(noHints){coins+=30;bonuses.push("No Hints")}else if(ms.hintLevel===1)coins+=15;else if(ms.hintLevel===2)coins+=5;if(fast){coins+=10;bonuses.push("Speed Bonus")}if(ms.hintLevel>=3)xp=Math.max(5,xp-8);else if(ms.hintLevel>=2)xp=Math.max(8,xp-4);let masteryGain=noHints?12:(ms.hintLevel===1?8:(ms.hintLevel===2?5:3));if(m.difficulty==="boss")masteryGain+=5;return{xp,coins,crystals,stars,bonuses,masteryGain:Math.min(20,masteryGain),firstTry,noErrors,noHints,fast}}};
+  addLine(afterIdx) {
+    const idx = afterIdx != null ? afterIdx + 1 : this.lines.length;
+    const prev = this.lines[Math.max(0, idx - 1)];
+    let indent = prev ? prev.indent : 0;
+    // After a line ending with :, suggest nested indent
+    if (prev && prev.tokens.length && prev.tokens[prev.tokens.length - 1] === ":") {
+      indent = prev.indent + 1;
+    }
+    this.lines.splice(idx, 0, { indent, tokens: [] });
+    MissionSession.activeLineIdx = idx;
+    this.render();
+    updateCodePreview();
+    playSound("place");
+  },
 
-const MasteryEngine={apply(skill,gain){if(!skill||!state.mastery.hasOwnProperty(skill))return;state.mastery[skill]=Math.min(100,(state.mastery[skill]||0)+gain)},level(pct){if(pct>=90)return"Мастер";if(pct>=70)return"Продвинутый";if(pct>=50)return"Уверенный";if(pct>=25)return"Практик";return"Новичок"},worldMastery(id){const s=WORLD_META[id-1]?.skill;return s?(state.mastery[s]||0):0}};
+  removeLine(idx) {
+    if (this.lines.length <= 1) {
+      this.lines[0] = { indent: 0, tokens: [] };
+    } else {
+      this.lines.splice(idx, 1);
+      MissionSession.activeLineIdx = Math.min(idx, this.lines.length - 1);
+    }
+    this.render();
+    updateCodePreview();
+  },
 
-const AchievementEngine={checkAndUnlock(){const newly=[];for(const ach of ACHIEVEMENTS){if(state.achievements.includes(ach.id))continue;try{if(ach.check(state)){state.achievements.push(ach.id);if(ach.reward){if(ach.reward.coins)state.coins+=ach.reward.coins;if(ach.reward.crystals)state.crystals+=ach.reward.crystals}newly.push(ach)}}catch(e){}}return newly},showPopup(ach){const el=document.getElementById("ach-popup");document.getElementById("ach-popup-icon").textContent=ach.icon;document.getElementById("ach-popup-name").textContent=ach.title;document.getElementById("ach-popup-desc").textContent=ach.desc+(ach.reward?.coins?" +"+ach.reward.coins+" 🪙":"");el.classList.add("show");setTimeout(()=>el.classList.remove("show"),3500);playSound("ach")}};
+  addToken(block, lineIdx) {
+    const li = lineIdx != null ? lineIdx : MissionSession.activeLineIdx;
+    if (!this.lines[li]) this.lines[li] = { indent: 0, tokens: [] };
+    this.lines[li].tokens.push(block);
+    // Auto-open new line after complete simple statement ending with )
+    const t = this.lines[li].tokens;
+    if (block === ")" && t[0] === "print") {
+      // leave user control — they use "New line"
+    }
+    // After ":" suggest nested line
+    if (block === ":") {
+      this.render();
+      updateCodePreview();
+      // pedagogy: show tip
+      showPedagogyTip("После «:» следующая команда пишется <strong>с отступом</strong> — она внутри блока if.");
+      return;
+    }
+    this.render();
+    updateCodePreview();
+    playSound("place");
+  },
 
-function updateStreak(){const today=new Date().toISOString().slice(0,10);if(state.lastPlay===today)return;const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);if(state.lastPlay===yesterday)state.streak=(state.streak||0)+1;else state.streak=1;state.lastPlay=today;if(state.streak>(state.bestStreak||0))state.bestStreak=state.streak}
+  removeToken(lineIdx, tokIdx) {
+    if (!this.lines[lineIdx]) return;
+    this.lines[lineIdx].tokens.splice(tokIdx, 1);
+    this.render();
+    updateCodePreview();
+  },
 
-function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500)}
-function playSound(type){if(!state.settings.sound)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);const freqs={run:440,ok:660,err:220,coin:880,ach:1100,place:520};o.frequency.value=freqs[type]||440;g.gain.value=.06;o.start();g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.15);o.stop(ctx.currentTime+.15)}catch(e){}}
-function toggleSound(){state.settings.sound=!state.settings.sound;SaveManager.save(state);document.getElementById("btn-sound").textContent=state.settings.sound?"🔊 Звук":"🔇 Звук";showToast(state.settings.sound?"Звук включён":"Звук выключен")}
-function escapeHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function formatTime(sec){const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+  setIndent(lineIdx, delta) {
+    if (!this.lines[lineIdx]) return;
+    this.lines[lineIdx].indent = Math.max(0, Math.min(4, (this.lines[lineIdx].indent || 0) + delta));
+    this.render();
+    updateCodePreview();
+  },
 
-function showHome(){stopTimer();document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-home").classList.add("active");updateHomeStats()}
-function showMap(){stopTimer();document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-map").classList.add("active");renderMap();updateMapHud()}
-function showDashboard(){stopTimer();document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-dash").classList.add("active");renderDashboard()}
-function updateHomeStats(){document.getElementById("home-xp").textContent=state.xp;document.getElementById("home-coins").textContent=state.coins;document.getElementById("home-crystals").textContent=state.crystals;document.getElementById("home-stars").textContent=state.stars;document.getElementById("home-rank").textContent=SaveManager.getRank(state.xp).name.split(" ").pop();document.getElementById("home-streak").textContent=state.streak||0;document.getElementById("btn-sound").textContent=state.settings.sound?"🔊 Звук":"🔇 Звук"}
-function updateMapHud(){document.getElementById("map-xp").textContent=state.xp;document.getElementById("map-coins").textContent=state.coins;document.getElementById("map-crystals").textContent=state.crystals;document.getElementById("map-stars").textContent=state.stars;document.getElementById("map-streak").textContent=state.streak||0;document.getElementById("map-rank").textContent=SaveManager.getRank(state.xp).name}
+  toCode() {
+    const out = [];
+    for (const line of this.lines) {
+      if (!line.tokens.length) continue;
+      let code = "";
+      const tokens = line.tokens;
+      for (let i = 0; i < tokens.length; i++) {
+        const t = tokens[i];
+        const next = tokens[i + 1];
+        if (["(", ")", ":"].includes(t)) {
+          code += t;
+        } else if (["=", "+", "-", "*", "/", "%", "**", "==", "!=", ">", "<", ">=", "<=", "and", "or"].includes(t)) {
+          if (code && !/\s$/.test(code)) code += " ";
+          code += t + " ";
+        } else if (t === "not") {
+          if (code && !/\s$/.test(code) && !code.endsWith("(")) code += " ";
+          code += "not ";
+        } else {
+          if (code && !/\s$/.test(code) && !code.endsWith("(") && !code.endsWith(":")) code += " ";
+          code += t;
+        }
+      }
+      code = code.replace(/print\s*\(/g, "print(").replace(/input\s*\(/g, "input(");
+      code = code.replace(/[ \t]+/g, " ").replace(/\(\s+/g, "(").replace(/\s+\)/g, ")").trim();
+      const indent = "    ".repeat(line.indent || 0);
+      out.push(indent + code);
+    }
+    return out.join("\n");
+  },
 
-function renderMap(){const grid=document.getElementById("world-grid");grid.innerHTML="";WORLD_META.forEach(w=>{const worldId=w.id;const isDev=worldId>5;const done=isDev?0:countWorldDone(worldId);const locked=worldId>state.unlockedWorld;const mastery=MasteryEngine.worldMastery(worldId);const bossDone=!isDev&&state.completed["w"+worldId+"m14"]&&state.completed["w"+worldId+"m15"];const card=document.createElement("div");card.className="world-card"+(locked?" locked":"")+(isDev?" dev":"")+(done===20?" completed":"");card.innerHTML=`<div class="num">WORLD ${worldId}</div><h3>${w.emoji} ${w.name}</h3><div class="theme">${w.theme}</div>${isDev?'<div class="dev-badge">В разработке</div>':`<div class="world-progress"><div class="world-progress-bar" style="width:${(done/20)*100}%"></div></div><div class="world-meta"><span>${done}/20</span><span>Mastery ${mastery}%</span></div><div class="world-meta" style="margin-top:4px"><span>Boss ${bossDone?"✓":"—"}</span></div>`}${locked&&!isDev?'<div class="lock-icon">🔒</div>':""}`;if(!locked&&!isDev)card.onclick=()=>openWorld(worldId);else if(isDev)card.onclick=()=>showToast("Мир в разработке. Скоро!");grid.appendChild(card)})}
+  render() {
+    const box = document.getElementById("block-program");
+    if (!box) return;
+    if (!this.lines.length) this.lines = [{ indent: 0, tokens: [] }];
+    box.innerHTML = "";
+    this.lines.forEach((line, li) => {
+      const row = document.createElement("div");
+      row.className = "block-line" + (li === MissionSession.activeLineIdx ? " active" : "");
+      row.setAttribute("role", "listitem");
+      row.onclick = () => { MissionSession.activeLineIdx = li; this.render(); };
 
-function renderDashboard(){const el=document.getElementById("dash-content");const rank=SaveManager.getRank(state.xp);const totalM=Object.keys(state.completed).length;const totalA=state.achievements.length;let skillsHtml=SKILL_KEYS.map(k=>{const pct=state.mastery[k]||0;return`<div class="skill-row"><div class="name">${k}</div><div class="bar-bg"><div class="bar-fg" style="width:${pct}%"></div></div><div class="pct">${pct}%</div></div>`}).join("");let achHtml=ACHIEVEMENTS.map(a=>{const un=state.achievements.includes(a.id);return`<div class="ach-card ${un?"unlocked":""}"><div class="ach-icon">${a.icon}</div><div class="ach-title">${a.title}</div><div class="ach-rarity">${a.rarity}</div></div>`}).join("");el.innerHTML=`<div class="dash-section"><h3>Общий прогресс</h3><div class="dash-cards"><div class="dash-card"><div class="val">${rank.name}</div><div class="lbl">Ранг</div></div><div class="dash-card"><div class="val">${state.xp}</div><div class="lbl">XP</div></div><div class="dash-card"><div class="val gold">${state.coins}</div><div class="lbl">Coins</div></div><div class="dash-card"><div class="val">${state.crystals}</div><div class="lbl">💎</div></div><div class="dash-card"><div class="val">${state.stars}</div><div class="lbl">⭐</div></div><div class="dash-card"><div class="val">${state.streak||0}</div><div class="lbl">🔥 Streak</div></div><div class="dash-card"><div class="val">${totalM}/100</div><div class="lbl">Миссии</div></div><div class="dash-card"><div class="val">${Math.min(5,state.unlockedWorld)}/5</div><div class="lbl">Миры</div></div><div class="dash-card"><div class="val">${totalA}/${ACHIEVEMENTS.length}</div><div class="lbl">Достижения</div></div></div></div><div class="dash-section"><h3>Python Mastery</h3>${skillsHtml}</div><div class="dash-section"><h3>Достижения</h3><div class="ach-grid">${achHtml}</div></div>`}
+      const num = document.createElement("div");
+      num.className = "block-line-num";
+      num.textContent = String(li + 1);
+      row.appendChild(num);
 
-function openWorld(worldId){if(worldId>5||!MISSIONS[worldId]){showToast("Мир в разработке");return}currentWorld=worldId;const missions=MISSIONS[worldId];let start=1;for(const m of missions){if(!state.completed["w"+worldId+"m"+m.id]){start=m.id;break}start=m.id}openMission(worldId,start)}
+      const indWrap = document.createElement("div");
+      indWrap.className = "block-line-indent";
+      for (let i = 0; i < (line.indent || 0); i++) {
+        const m = document.createElement("div");
+        m.className = "indent-marker";
+        m.title = "Отступ (внутри блока)";
+        indWrap.appendChild(m);
+      }
+      if ((line.indent || 0) > 0) {
+        const arrow = document.createElement("span");
+        arrow.style.cssText = "color:var(--purple);font-size:.75rem;margin-right:2px";
+        arrow.textContent = "↳";
+        arrow.title = "Эта команда внутри блока (отступ)";
+        indWrap.appendChild(arrow);
+      }
+      row.appendChild(indWrap);
 
-function openMission(worldId,missionId){if(worldId>5||!MISSIONS[worldId]){showToast("Мир в разработке");return}currentWorld=worldId;currentMission=missionId;missionState=createMissionState();assembledBlocks=[];dragSrcIdx=null;const m=ensureSkill(MISSIONS[worldId][missionId-1],worldId);document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));document.getElementById("screen-mission").classList.add("active");document.getElementById("m-title").textContent=m.title;document.getElementById("m-meta").textContent=`${WORLD_META[worldId-1].name} · Миссия ${missionId}/20 · ${m.difficulty.toUpperCase()}`;document.getElementById("m-story").textContent=m.story;document.getElementById("m-objective").innerHTML=`<strong>Цель:</strong> ${m.objective}`;updateMissionStatsBar();const isBlock=m.type==="block";document.getElementById("block-area").style.display=isBlock?"flex":"none";document.getElementById("editor-area").style.display=isBlock?"none":"flex";document.getElementById("mode-label").innerHTML=isBlock?'Собери код из блоков <span class="reuse-badge">∞ блоки можно использовать многократно</span>':"Напиши код самостоятельно";if(isBlock){renderBlocks(m.blocks||[]);document.getElementById("assembly").innerHTML='<div class="assembly-placeholder" id="assembly-ph">Кликни или перетащи блоки сюда · каждый блок можно использовать многократно</div>';updateCodePreview()}else{document.getElementById("code-editor").value="";const prev=document.getElementById("code-preview");if(prev)prev.style.display="none"}renderHintButtons();resetScene(m);clearConsole(true);document.getElementById("btn-complete").disabled=true;document.getElementById("check-panel").style.display="none";startTimer()}
+      const toks = document.createElement("div");
+      toks.className = "block-line-tokens";
+      toks.setAttribute("aria-label", "Строка " + (li + 1));
+      if (!line.tokens.length) {
+        const ph = document.createElement("span");
+        ph.style.cssText = "color:var(--muted);font-size:.78rem;font-style:italic";
+        ph.textContent = (line.indent > 0) ? "↳ действие внутри блока..." : "перетащи блоки сюда";
+        toks.appendChild(ph);
+      } else {
+        line.tokens.forEach((b, ti) => {
+          const el = document.createElement("div");
+          el.className = "block " + blockClass(b);
+          el.textContent = b;
+          el.title = getBlockTip(b) + " · клик = удалить";
+          el.onclick = (e) => { e.stopPropagation(); this.removeToken(li, ti); };
+          el.draggable = true;
+          el.ondragstart = (e) => {
+            MissionSession.dragSrc = { line: li, tok: ti, block: b };
+            e.dataTransfer.setData("text/plain", JSON.stringify({ from: "line", line: li, tok: ti, block: b }));
+          };
+          toks.appendChild(el);
+        });
+      }
+      // Drop zone for tokens onto this line
+      toks.ondragover = (e) => { e.preventDefault(); e.stopPropagation(); };
+      toks.ondrop = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        try {
+          const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+          if (data.from === "palette") {
+            MissionSession.activeLineIdx = li;
+            this.addToken(data.block, li);
+          } else if (data.from === "line" && data.line != null) {
+            const item = this.lines[data.line].tokens.splice(data.tok, 1)[0];
+            this.lines[li].tokens.push(item);
+            this.render();
+            updateCodePreview();
+          }
+        } catch (_) {}
+      };
+      row.appendChild(toks);
 
-function updateMissionStatsBar(){if(!missionState)return;const sec=Math.floor((Date.now()-missionState.startedAt)/1000);document.getElementById("m-timer").textContent=formatTime(sec);document.getElementById("scene-timer").textContent="⏱ "+formatTime(sec);document.getElementById("m-attempts").textContent=missionState.attempts;document.getElementById("m-errors").textContent=missionState.errorsCount;document.getElementById("m-hints-used").textContent=missionState.hintsUsed}
-function startTimer(){stopTimer();timerInterval=setInterval(()=>{if(!missionState||missionState.completed)return;updateMissionStatsBar()},1000)}
-function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null}}
-function exitMission(){stopTimer();showMap()}
+      const actions = document.createElement("div");
+      actions.className = "block-line-actions";
+      const btnIn = document.createElement("button");
+      btnIn.textContent = "⇥";
+      btnIn.title = "Увеличить отступ";
+      btnIn.setAttribute("aria-label", "Увеличить отступ");
+      btnIn.onclick = (e) => { e.stopPropagation(); this.setIndent(li, 1); };
+      const btnOut = document.createElement("button");
+      btnOut.textContent = "⇤";
+      btnOut.title = "Уменьшить отступ";
+      btnOut.setAttribute("aria-label", "Уменьшить отступ");
+      btnOut.onclick = (e) => { e.stopPropagation(); this.setIndent(li, -1); };
+      const btnDel = document.createElement("button");
+      btnDel.textContent = "✕";
+      btnDel.title = "Удалить строку";
+      btnDel.setAttribute("aria-label", "Удалить строку");
+      btnDel.onclick = (e) => { e.stopPropagation(); this.removeLine(li); };
+      actions.appendChild(btnOut);
+      actions.appendChild(btnIn);
+      actions.appendChild(btnDel);
+      row.appendChild(actions);
 
-function blockClass(b){if(["print","if","else","elif","input","and","or","not"].includes(b))return"keyword";if(b.startsWith('"')||b.startsWith("'"))return"string";if(/^-?\d+$/.test(b))return"number";if(["+","-","*","/","%","**","==","!=",">","<",">=","<=","=",":","(",")"].includes(b))return"op";return"var"}
-function getBlockTip(b){
-  const tips={
-    "print":"print(...) — выводит значение на экран",
-    "input":"input() — читает данные от пользователя",
-    "if":"if условие: — выполняет код, если условие истинно",
-    "elif":"elif условие: — иначе если",
-    "else":"else: — иначе (когда if/elif ложны)",
-    "and":"and — логическое И (оба условия)",
-    "or":"or — логическое ИЛИ (хотя бы одно)",
-    "not":"not — логическое НЕ (инверсия)",
-    "=":"= — присваивание значения переменной",
-    "==":"== — проверка на равенство",
-    "!=":"!= — не равно",
-    ">":"> — больше",
-    "<":"< — меньше",
-    ">=":">= — больше или равно",
-    "<=":"<= — меньше или равно",
-    "+":"+ — сложение",
-    "-":"- — вычитание",
-    "*":"* — умножение",
-    "/":"/ — деление",
-    "%":"% — остаток от деления",
-    "**":"** — возведение в степень",
-    "(":"( — открывающая скобка",
-    ")":") — закрывающая скобка",
-    ":":": — начало блока (после if/else)"
+      box.appendChild(row);
+    });
+    // Container-level drop (palette → active / new line)
+    box.ondragover = (e) => { e.preventDefault(); box.classList.add("drag-over"); };
+    box.ondragleave = () => box.classList.remove("drag-over");
+    box.ondrop = (e) => {
+      e.preventDefault();
+      box.classList.remove("drag-over");
+      try {
+        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        if (data.from === "palette") {
+          this.addToken(data.block);
+        }
+      } catch (_) {}
+    };
+  }
+};
+
+function showPedagogyTip(html) {
+  const el = document.getElementById("pedagogy-tip");
+  if (!el) return;
+  el.innerHTML = html;
+  el.style.display = "block";
+}
+
+function hidePedagogyTip() {
+  const el = document.getElementById("pedagogy-tip");
+  if (el) el.style.display = "none";
+}
+
+/* ============================================================================
+   CODE EDITOR — line numbers, auto-indent, Tab/Shift+Tab
+============================================================================ */
+const CodeEditor = {
+  init() {
+    const ta = document.getElementById("code-editor");
+    if (!ta || ta._pqiBound) return;
+    ta._pqiBound = true;
+    ta.addEventListener("input", () => this.updateGutter());
+    ta.addEventListener("scroll", () => {
+      const g = document.getElementById("code-gutter");
+      if (g) g.scrollTop = ta.scrollTop;
+    });
+    ta.addEventListener("keydown", (e) => this.onKey(e));
+    this.updateGutter();
+  },
+
+  updateGutter() {
+    const ta = document.getElementById("code-editor");
+    const g = document.getElementById("code-gutter");
+    if (!ta || !g) return;
+    const lines = ta.value.split("\n").length;
+    let html = "";
+    for (let i = 1; i <= Math.max(1, lines); i++) html += "<div>" + i + "</div>";
+    g.innerHTML = html;
+  },
+
+  onKey(e) {
+    const ta = e.target;
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      if (e.shiftKey) {
+        // Unindent current line(s)
+        const val = ta.value;
+        const lineStart = val.lastIndexOf("\n", start - 1) + 1;
+        const lineEnd = val.indexOf("\n", end);
+        const endPos = lineEnd === -1 ? val.length : lineEnd;
+        let block = val.slice(lineStart, endPos);
+        const newBlock = block.split("\n").map(l => l.startsWith("    ") ? l.slice(4) : (l.startsWith("\t") ? l.slice(1) : l)).join("\n");
+        ta.value = val.slice(0, lineStart) + newBlock + val.slice(endPos);
+        ta.selectionStart = lineStart;
+        ta.selectionEnd = lineStart + newBlock.length;
+      } else {
+        // Insert 4 spaces
+        ta.value = ta.value.slice(0, start) + "    " + ta.value.slice(end);
+        ta.selectionStart = ta.selectionEnd = start + 4;
+      }
+      this.updateGutter();
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const start = ta.selectionStart;
+      const val = ta.value;
+      const lineStart = val.lastIndexOf("\n", start - 1) + 1;
+      const curLine = val.slice(lineStart, start);
+      const indentMatch = curLine.match(/^(\s*)/);
+      let indent = indentMatch ? indentMatch[1] : "";
+      // Auto-indent after :
+      if (/:\s*$/.test(curLine.trimEnd()) || /:\s*$/.test(curLine)) {
+        indent += "    ";
+      }
+      const insert = "\n" + indent;
+      ta.value = val.slice(0, start) + insert + val.slice(ta.selectionEnd);
+      ta.selectionStart = ta.selectionEnd = start + insert.length;
+      this.updateGutter();
+      return;
+    }
+    if (e.key === "Backspace") {
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      if (start === end && start > 0) {
+        const before = ta.value.slice(Math.max(0, start - 4), start);
+        if (before === "    ") {
+          e.preventDefault();
+          ta.value = ta.value.slice(0, start - 4) + ta.value.slice(start);
+          ta.selectionStart = ta.selectionEnd = start - 4;
+          this.updateGutter();
+        }
+      }
+    }
+  },
+
+  getValue() {
+    const ta = document.getElementById("code-editor");
+    return ta ? ta.value : "";
+  },
+
+  setValue(v) {
+    const ta = document.getElementById("code-editor");
+    if (ta) { ta.value = v || ""; this.updateGutter(); }
+  },
+
+  clear() {
+    this.setValue("");
+  }
+};
+
+/* ============================================================================
+   MISSION SESSION HELPERS
+============================================================================ */
+function createMissionState() {
+  return {
+    startedAt: Date.now(), completedAt: null, durationSeconds: 0,
+    attempts: 0, successfulAttempts: 0, failedAttempts: 0, errorsCount: 0,
+    hintsUsed: 0, hintLevel: 0,
+    hint1Used: false, hint2Used: false, hint3Used: false,
+    firstHintAt: null, lastHintAt: null,
+    codeExecuted: false, objectiveCompleted: false, checked: false,
+    completed: false, bestOutput: "", lastError: null, lastResult: null
   };
-  if(tips[b]) return tips[b];
-  if(b.startsWith('"')||b.startsWith("'")) return "Строка (текст в кавычках)";
-  if(/^-?\d+$/.test(b)) return "Число";
-  if(/^[a-zA-Z_]\w*$/.test(b)) return "Переменная / имя";
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  if (a.length > 2 && a.every((v, i) => v === arr[i])) return shuffle(arr);
+  return a;
+}
+
+const RewardEngine = {
+  calc(m, ms) {
+    const base = { easy: 50, medium: 75, hard: 110, boss: 200 };
+    let coins = base[m.difficulty] || 50;
+    let xp = m.difficulty === "easy" ? 15 : m.difficulty === "medium" ? 25 : m.difficulty === "hard" ? 40 : 60;
+    let crystals = m.difficulty === "boss" ? 12 : 4;
+    let stars = 1;
+    const bonuses = [];
+    const firstTry = ms.attempts === 1;
+    const noErrors = ms.errorsCount === 0;
+    const noHints = ms.hintsUsed === 0;
+    const fast = ms.durationSeconds > 0 && ms.durationSeconds <= 30;
+    if (firstTry) { coins += 30; bonuses.push("First Try"); }
+    if (noErrors) { coins += 25; bonuses.push("No Errors"); }
+    if (noHints) { coins += 30; bonuses.push("No Hints"); }
+    else if (ms.hintLevel === 1) coins += 15;
+    else if (ms.hintLevel === 2) coins += 5;
+    if (fast) { coins += 10; bonuses.push("Speed Bonus"); }
+    if (ms.hintLevel >= 3) xp = Math.max(5, xp - 8);
+    else if (ms.hintLevel >= 2) xp = Math.max(8, xp - 4);
+    let masteryGain = noHints ? 12 : (ms.hintLevel === 1 ? 8 : (ms.hintLevel === 2 ? 5 : 3));
+    if (m.difficulty === "boss") masteryGain += 5;
+    return { xp, coins, crystals, stars, bonuses, masteryGain: Math.min(20, masteryGain), firstTry, noErrors, noHints, fast };
+  }
+};
+
+const MasteryEngine = {
+  apply(skill, gain) {
+    if (!skill || !state.mastery.hasOwnProperty(skill)) return;
+    state.mastery[skill] = Math.min(100, (state.mastery[skill] || 0) + gain);
+  },
+  level(pct) {
+    if (pct >= 90) return "Мастер";
+    if (pct >= 70) return "Продвинутый";
+    if (pct >= 50) return "Уверенный";
+    if (pct >= 25) return "Практик";
+    return "Новичок";
+  },
+  worldMastery(id) {
+    const s = WORLD_META[id - 1]?.skill;
+    return s ? (state.mastery[s] || 0) : 0;
+  }
+};
+
+const AchievementEngine = {
+  checkAndUnlock() {
+    const newly = [];
+    for (const ach of ACHIEVEMENTS) {
+      if (state.achievements.includes(ach.id)) continue;
+      try {
+        if (ach.check(state)) {
+          state.achievements.push(ach.id);
+          if (ach.reward) {
+            if (ach.reward.coins) state.coins += ach.reward.coins;
+            if (ach.reward.crystals) state.crystals += ach.reward.crystals;
+          }
+          newly.push(ach);
+        }
+      } catch (e) {}
+    }
+    return newly;
+  },
+  showPopup(ach) {
+    const el = document.getElementById("ach-popup");
+    document.getElementById("ach-popup-icon").textContent = ach.icon;
+    document.getElementById("ach-popup-name").textContent = ach.title;
+    document.getElementById("ach-popup-desc").textContent = ach.desc + (ach.reward?.coins ? " +" + ach.reward.coins + " 🪙" : "");
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 3500);
+    playSound("ach");
+  }
+};
+
+function updateStreak() {
+  const today = new Date().toISOString().slice(0, 10);
+  if (state.lastPlay === today) return;
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (state.lastPlay === yesterday) state.streak = (state.streak || 0) + 1;
+  else state.streak = 1;
+  state.lastPlay = today;
+  if (state.streak > (state.bestStreak || 0)) state.bestStreak = state.streak;
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+function playSound(type) {
+  if (!state.settings || !state.settings.sound) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    const freqs = { run: 440, ok: 660, err: 220, coin: 880, ach: 1100, place: 520 };
+    o.frequency.value = freqs[type] || 440;
+    g.gain.value = 0.06;
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    o.stop(ctx.currentTime + 0.15);
+  } catch (e) {}
+}
+function toggleSound() {
+  if (!state.settings) state.settings = { sound: true };
+  state.settings.sound = !state.settings.sound;
+  persistState();
+  document.getElementById("btn-sound").textContent = state.settings.sound ? "🔊 Звук" : "🔇 Звук";
+  showToast(state.settings.sound ? "Звук включён" : "Звук выключен");
+}
+function escapeHtml(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function formatTime(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+function showHome() {
+  MissionSession.stopTimer();
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-home").classList.add("active");
+  updateHomeStats();
+}
+function showMap() {
+  MissionSession.stopTimer();
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-map").classList.add("active");
+  renderMap();
+  updateMapHud();
+}
+function showDashboard() {
+  MissionSession.stopTimer();
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-dash").classList.add("active");
+  renderDashboard();
+}
+function updateHomeStats() {
+  document.getElementById("home-xp").textContent = state.xp || 0;
+  document.getElementById("home-coins").textContent = state.coins || 0;
+  document.getElementById("home-crystals").textContent = state.crystals || 0;
+  document.getElementById("home-stars").textContent = state.stars || 0;
+  document.getElementById("home-rank").textContent = SaveManager.getRank(state.xp || 0).name.split(" ").pop();
+  document.getElementById("home-streak").textContent = state.streak || 0;
+  document.getElementById("btn-sound").textContent = (state.settings && state.settings.sound) ? "🔊 Звук" : "🔇 Звук";
+}
+function updateMapHud() {
+  document.getElementById("map-xp").textContent = state.xp || 0;
+  document.getElementById("map-coins").textContent = state.coins || 0;
+  document.getElementById("map-crystals").textContent = state.crystals || 0;
+  document.getElementById("map-stars").textContent = state.stars || 0;
+  document.getElementById("map-streak").textContent = state.streak || 0;
+  document.getElementById("map-rank").textContent = SaveManager.getRank(state.xp || 0).name;
+}
+
+function renderMap() {
+  const grid = document.getElementById("world-grid");
+  grid.innerHTML = "";
+  WORLD_META.forEach(w => {
+    const worldId = w.id;
+    const isDev = worldId > 5;
+    const done = isDev ? 0 : countWorldDone(worldId);
+    const locked = worldId > (state.unlockedWorld || 1);
+    const mastery = MasteryEngine.worldMastery(worldId);
+    const bossDone = !isDev && state.completed["w" + worldId + "m14"] && state.completed["w" + worldId + "m15"];
+    const card = document.createElement("div");
+    card.className = "world-card" + (locked ? " locked" : "") + (isDev ? " dev" : "") + (done === 20 ? " completed" : "");
+    card.innerHTML = `<div class="num">WORLD ${worldId}</div><h3>${w.emoji} ${w.name}</h3><div class="theme">${w.theme}</div>${isDev ? '<div class="dev-badge">В разработке</div>' : `<div class="world-progress"><div class="world-progress-bar" style="width:${(done / 20) * 100}%"></div></div><div class="world-meta"><span>${done}/20</span><span>Mastery ${mastery}%</span></div><div class="world-meta" style="margin-top:4px"><span>Boss ${bossDone ? "✓" : "—"}</span></div>`}${locked && !isDev ? '<div class="lock-icon">🔒</div>' : ""}`;
+    if (!locked && !isDev) card.onclick = () => openWorld(worldId);
+    else if (isDev) card.onclick = () => showToast("Мир в разработке. Скоро!");
+    grid.appendChild(card);
+  });
+}
+
+function renderDashboard() {
+  const el = document.getElementById("dash-content");
+  const rank = SaveManager.getRank(state.xp || 0);
+  const totalM = Object.keys(state.completed || {}).length;
+  const totalA = (state.achievements || []).length;
+  let skillsHtml = SKILL_KEYS.map(k => {
+    const pct = (state.mastery && state.mastery[k]) || 0;
+    return `<div class="skill-row"><div class="name">${k}</div><div class="bar-bg"><div class="bar-fg" style="width:${pct}%"></div></div><div class="pct">${pct}%</div></div>`;
+  }).join("");
+  let achHtml = ACHIEVEMENTS.map(a => {
+    const un = (state.achievements || []).includes(a.id);
+    return `<div class="ach-card ${un ? "unlocked" : ""}"><div class="ach-icon">${a.icon}</div><div class="ach-title">${a.title}</div><div class="ach-rarity">${a.rarity}</div></div>`;
+  }).join("");
+  el.innerHTML = `<div class="dash-section"><h3>Общий прогресс</h3><div class="dash-cards"><div class="dash-card"><div class="val">${rank.name}</div><div class="lbl">Ранг</div></div><div class="dash-card"><div class="val">${state.xp || 0}</div><div class="lbl">XP</div></div><div class="dash-card"><div class="val gold">${state.coins || 0}</div><div class="lbl">Coins</div></div><div class="dash-card"><div class="val">${state.crystals || 0}</div><div class="lbl">💎</div></div><div class="dash-card"><div class="val">${state.stars || 0}</div><div class="lbl">⭐</div></div><div class="dash-card"><div class="val">${state.streak || 0}</div><div class="lbl">🔥 Streak</div></div><div class="dash-card"><div class="val">${totalM}/100</div><div class="lbl">Миссии</div></div><div class="dash-card"><div class="val">${Math.min(5, state.unlockedWorld || 1)}/5</div><div class="lbl">Миры</div></div><div class="dash-card"><div class="val">${totalA}/${ACHIEVEMENTS.length}</div><div class="lbl">Достижения</div></div></div></div><div class="dash-section"><h3>Python Mastery</h3>${skillsHtml}</div><div class="dash-section"><h3>Достижения</h3><div class="ach-grid">${achHtml}</div></div>`;
+}
+
+function openWorld(worldId) {
+  if (worldId > 5 || !MISSIONS[worldId]) { showToast("Мир в разработке"); return; }
+  MissionSession.currentWorld = worldId;
+  currentWorld = worldId;
+  const missions = MISSIONS[worldId];
+  let start = 1;
+  for (const m of missions) {
+    if (!state.completed["w" + worldId + "m" + m.id]) { start = m.id; break; }
+    start = m.id;
+  }
+  openMission(worldId, start);
+}
+
+function openMission(worldId, missionId) {
+  if (worldId > 5 || !MISSIONS[worldId]) { showToast("Мир в разработке"); return; }
+  MissionSession.currentWorld = worldId;
+  MissionSession.currentMission = missionId;
+  MissionSession.missionState = createMissionState();
+  MissionSession.programLines = [{ indent: 0, tokens: [] }];
+  MissionSession.activeLineIdx = 0;
+  MissionSession.dragSrc = null;
+  currentWorld = worldId;
+  currentMission = missionId;
+  missionState = MissionSession.missionState;
+
+  const m = ensureSkill(MISSIONS[worldId][missionId - 1], worldId);
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-mission").classList.add("active");
+  document.getElementById("m-title").textContent = m.title;
+  document.getElementById("m-meta").textContent = `${WORLD_META[worldId - 1].name} · Миссия ${missionId}/20 · ${m.difficulty.toUpperCase()}`;
+  document.getElementById("m-story").textContent = m.story;
+  document.getElementById("m-objective").innerHTML = `<strong>Цель:</strong> ${m.objective}`;
+  updateMissionStatsBar();
+
+  const isBlock = m.type === "block";
+  document.getElementById("block-area").style.display = isBlock ? "flex" : "none";
+  document.getElementById("editor-area").style.display = isBlock ? "none" : "flex";
+  document.getElementById("mode-label").innerHTML = isBlock
+    ? 'Собери код по <strong>строкам</strong> <span class="reuse-badge">∞ блоки · ＋ новая строка</span>'
+    : "Напиши код самостоятельно · Enter = новая строка";
+
+  hidePedagogyTip();
+  if (isBlock) {
+    renderBlocks(m.blocks || []);
+    BlockEditor.initEmpty();
+    // Pedagogy tips by concept
+    if (missionId === 1 && worldId === 1) {
+      showPedagogyTip("В Python <strong>каждая команда</strong> обычно пишется на <strong>своей строке</strong>.");
+    } else if (m.objective && /два print|две|три print|четыре print/i.test(m.objective + m.story)) {
+      showPedagogyTip("Нужно несколько команд → значит <strong>несколько строк</strong>. Нажми «＋ Новая строка».");
+    } else if (m.blocks && m.blocks.includes("if")) {
+      showPedagogyTip("После <strong>:</strong> команда внутри if пишется с <strong>отступом ↳</strong>. Используй ⇥.");
+    }
+    updateCodePreview();
+  } else {
+    CodeEditor.init();
+    CodeEditor.clear();
+    if (m.setupVars) {
+      // optional starter comment
+    }
+  }
+  renderHintButtons();
+  resetScene(m);
+  clearConsole(true);
+  document.getElementById("btn-complete").disabled = true;
+  document.getElementById("btn-check").disabled = true;
+  document.getElementById("check-panel").style.display = "none";
+  startTimer();
+}
+
+function updateMissionStatsBar() {
+  if (!MissionSession.missionState) return;
+  const ms = MissionSession.missionState;
+  const sec = Math.floor((Date.now() - ms.startedAt) / 1000);
+  document.getElementById("m-timer").textContent = formatTime(sec);
+  document.getElementById("scene-timer").textContent = "⏱ " + formatTime(sec);
+  document.getElementById("m-attempts").textContent = ms.attempts;
+  document.getElementById("m-errors").textContent = ms.errorsCount;
+  document.getElementById("m-hints-used").textContent = ms.hintsUsed;
+}
+function startTimer() {
+  MissionSession.stopTimer();
+  MissionSession.timerInterval = setInterval(() => {
+    if (!MissionSession.missionState || MissionSession.missionState.completed) return;
+    updateMissionStatsBar();
+  }, 1000);
+}
+function stopTimer() { MissionSession.stopTimer(); }
+function exitMission() {
+  MissionSession.stopTimer();
+  MissionSession.clear();
+  syncSessionAliases();
+  showMap();
+}
+
+function blockClass(b) {
+  if (["print", "if", "else", "elif", "input", "and", "or", "not"].includes(b)) return "keyword";
+  if (b.startsWith('"') || b.startsWith("'")) return "string";
+  if (/^-?\d+$/.test(b)) return "number";
+  if (["+", "-", "*", "/", "%", "**", "==", "!=", ">", "<", ">=", "<=", "=", ":", "(", ")"].includes(b)) return "op";
+  return "var";
+}
+function getBlockTip(b) {
+  const tips = {
+    "print": "print(...) — выводит значение на экран",
+    "input": "input() — читает данные от пользователя",
+    "if": "if условие: — выполняет код, если условие истинно",
+    "elif": "elif условие: — иначе если",
+    "else": "else: — иначе (когда if/elif ложны)",
+    "and": "and — логическое И (оба условия)",
+    "or": "or — логическое ИЛИ (хотя бы одно)",
+    "not": "not — логическое НЕ (инверсия)",
+    "=": "= — присваивание значения переменной",
+    "==": "== — проверка на равенство",
+    "!=": "!= — не равно",
+    ">": "> — больше",
+    "<": "< — меньше",
+    ">=": ">= — больше или равно",
+    "<=": "<= — меньше или равно",
+    "+": "+ — сложение",
+    "-": "- — вычитание",
+    "*": "* — умножение",
+    "/": "/ — деление",
+    "%": "% — остаток от деления",
+    "**": "** — возведение в степень",
+    "(": "( — открывающая скобка",
+    ")": ") — закрывающая скобка",
+    ":": ": — начало блока (после if/else) · следующая строка с отступом"
+  };
+  if (tips[b]) return tips[b];
+  if (b.startsWith('"') || b.startsWith("'")) return "Строка (текст в кавычках)";
+  if (/^-?\d+$/.test(b)) return "Число";
+  if (/^[a-zA-Z_]\w*$/.test(b)) return "Переменная / имя";
   return "Элемент кода";
 }
-function renderBlocks(blocks){
-  const palette=document.getElementById("block-palette");
-  palette.innerHTML="";
-  // Unique blocks preserving first-occurrence order (ученик может использовать каждый блок сколько угодно раз)
-  const seen=new Set();
-  const unique=[];
-  for(const b of blocks){
-    if(!seen.has(b)){seen.add(b);unique.push(b)}
+
+function renderBlocks(blocks) {
+  const palette = document.getElementById("block-palette");
+  palette.innerHTML = "";
+  const seen = new Set();
+  const unique = [];
+  for (const b of blocks) {
+    if (!seen.has(b)) { seen.add(b); unique.push(b); }
   }
-  // Soft shuffle of unique only (keeps educational order somewhat stable)
-  const shuffled=shuffle(unique);
-  shuffled.forEach(b=>{
-    const el=document.createElement("div");
-    el.className="block "+blockClass(b);
-    el.textContent=b;
-    el.draggable=true;
-    el.setAttribute("data-tip",getBlockTip(b));
-    el.title=getBlockTip(b);
-    el.onclick=()=>addBlock(b);
-    el.ondragstart=e=>{
-      e.dataTransfer.setData("text/plain",JSON.stringify({from:"palette",block:b}));
+  const shuffled = shuffle(unique);
+  shuffled.forEach(b => {
+    const el = document.createElement("div");
+    el.className = "block " + blockClass(b);
+    el.textContent = b;
+    el.draggable = true;
+    el.setAttribute("data-tip", getBlockTip(b));
+    el.title = getBlockTip(b);
+    el.setAttribute("aria-label", "Блок " + b);
+    el.onclick = () => BlockEditor.addToken(b);
+    el.ondragstart = e => {
+      e.dataTransfer.setData("text/plain", JSON.stringify({ from: "palette", block: b }));
       el.classList.add("dragging");
     };
-    el.ondragend=()=>el.classList.remove("dragging");
+    el.ondragend = () => el.classList.remove("dragging");
     palette.appendChild(el);
   });
 }
-function addBlock(b){assembledBlocks.push(b);renderAssembly();updateCodePreview();playSound("place")}
-function renderAssembly(){const box=document.getElementById("assembly");if(!assembledBlocks.length){box.innerHTML='<div class="assembly-placeholder" id="assembly-ph">Кликни или перетащи блоки сюда · каждый блок можно использовать многократно</div>';updateCodePreview();return}box.innerHTML="";assembledBlocks.forEach((b,idx)=>{const el=document.createElement("div");el.className="block "+blockClass(b);el.textContent=b;el.draggable=true;el.title="Перетащи или кликни для удаления";el.onclick=e=>{e.stopPropagation();assembledBlocks.splice(idx,1);renderAssembly();updateCodePreview()};el.ondragstart=e=>{dragSrcIdx=idx;e.dataTransfer.setData("text/plain",JSON.stringify({from:"assembly",idx}));el.classList.add("dragging")};el.ondragend=()=>{el.classList.remove("dragging");dragSrcIdx=null};el.ondragover=e=>{e.preventDefault();e.stopPropagation()};el.ondrop=e=>{e.preventDefault();e.stopPropagation();try{const data=JSON.parse(e.dataTransfer.getData("text/plain"));if(data.from==="assembly"&&data.idx!==idx){const item=assembledBlocks.splice(data.idx,1)[0];assembledBlocks.splice(idx,0,item);renderAssembly();updateCodePreview()}else if(data.from==="palette"){assembledBlocks.splice(idx,0,data.block);renderAssembly();updateCodePreview()}}catch(err){}};box.appendChild(el)});updateCodePreview()}
-function onAssemblyDragOver(e){e.preventDefault();document.getElementById("assembly").classList.add("drag-over")}
-function onAssemblyDragLeave(e){document.getElementById("assembly").classList.remove("drag-over")}
-function onAssemblyDrop(e){e.preventDefault();document.getElementById("assembly").classList.remove("drag-over");try{const data=JSON.parse(e.dataTransfer.getData("text/plain"));if(data.from==="palette"){assembledBlocks.push(data.block);renderAssembly();updateCodePreview();playSound("place")}else if(data.from==="assembly"&&data.idx!=null&&(e.target.id==="assembly"||e.target.id==="assembly-ph")){const item=assembledBlocks.splice(data.idx,1)[0];assembledBlocks.push(item);renderAssembly();updateCodePreview()}}catch(err){}}
 
-function blocksToCode() {
-  // Robust token-to-code conversion for block assembly
-  const tokens = assembledBlocks;
-  let code = "";
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-    const next = tokens[i + 1];
-    // Newline before statement keywords (print/if/elif/else) when not continuing after :
-    if ((["print","if","elif","else"].includes(t)) && code && !code.endsWith("\n") && !code.endsWith(":")) {
-      code += "\n";
-    }
-    // Newline before a new assignment (name = ...) after a complete previous statement
-    if (/^[a-zA-Z_]\w*$/.test(t) && next === "=" && code && !code.endsWith("\n") && !code.endsWith("(") && !/[=\+\-\*\/%\s]$/.test(code.slice(-1))) {
-      code += "\n";
-    }
-    if (["(",")",":"].includes(t)) {
-      code += t;
-    } else if (["=","+","-","*","/","%","**","==","!=",">","<",">=","<=","and","or"].includes(t)) {
-      if (code && !/\s$/.test(code) && !code.endsWith("\n")) code += " ";
-      code += t + " ";
-    } else if (t === "not") {
-      if (code && !/\s$/.test(code) && !code.endsWith("\n") && !code.endsWith("(")) code += " ";
-      code += "not ";
-    } else {
-      // names, numbers, strings, keywords like input
-      if (code && !/\s$/.test(code) && !code.endsWith("\n") && !code.endsWith("(") && !code.endsWith(":")) code += " ";
-      code += t;
-    }
-  }
-  // Normalize
-  code = code.replace(/print\s*\(/g, "print(");
-  code = code.replace(/input\s*\(/g, "input(");
-  code = code.replace(/[ \t]+/g, " ");
-  code = code.replace(/ \n/g, "\n").replace(/\n /g, "\n");
-  code = code.replace(/\(\s+/g, "(").replace(/\s+\)/g, ")");
-  // Force body after colon onto next line
-  code = code.replace(/:\s*/g, ":\n");
-  code = code.replace(/\n+/g, "\n").trim();
-  // Ensure keywords start on their own line (word-boundary safe, longer first)
-  code = code.replace(/([^\n])\b(elif)\b/g, "$1\n$2");
-  code = code.replace(/([^\n])\b(else)\b/g, "$1\n$2");
-  code = code.replace(/([^\n])\b(print\()/g, "$1\n$2");
-  code = code.replace(/([^\n])\b(if)\b/g, "$1\n$2");
-  code = code.replace(/\n+/g, "\n").trim();
-  // Apply indentation for if/elif/else blocks
-  const lines = code.split("\n").map(l => l.trim()).filter(Boolean);
-  let result = [];
-  let indent = 0;
-  for (let line of lines) {
-    if (line.startsWith("elif") || line.startsWith("else")) indent = Math.max(0, indent - 1);
-    result.push("    ".repeat(indent) + line);
-    if (line.endsWith(":")) indent++;
-  }
-  return result.join("\n");
+function getCode() {
+  const world = MISSIONS[MissionSession.currentWorld];
+  if (!world) return "";
+  const m = world[MissionSession.currentMission - 1];
+  if (!m) return "";
+  return m.type === "block" ? BlockEditor.toCode() : CodeEditor.getValue();
 }
 
-function getCode(){const m=MISSIONS[currentWorld][currentMission-1];return m.type==="block"?blocksToCode():document.getElementById("code-editor").value}
-function updateCodePreview(){
-  const el=document.getElementById("code-preview");
-  if(!el)return;
-  const m=MISSIONS[currentWorld]&&MISSIONS[currentWorld][currentMission-1];
-  if(!m||m.type!=="block"){el.style.display="none";return}
-  el.style.display="block";
-  if(!assembledBlocks.length){
-    el.className="code-preview empty";
-    el.textContent="Твой код появится здесь...";
+function updateCodePreview() {
+  const el = document.getElementById("code-preview");
+  if (!el) return;
+  const m = MISSIONS[MissionSession.currentWorld] && MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
+  if (!m || m.type !== "block") { el.style.display = "none"; return; }
+  el.style.display = "block";
+  const code = BlockEditor.toCode();
+  if (!code.trim()) {
+    el.className = "code-preview empty";
+    el.textContent = "Твой код появится здесь...";
     return;
   }
-  try{
-    const code=blocksToCode();
-    el.className="code-preview";
-    el.textContent=code||"(пусто)";
-  }catch(e){
-    el.className="code-preview empty";
-    el.textContent="Собери код...";
+  el.className = "code-preview";
+  el.textContent = code;
+}
+
+function resetWorkspace() {
+  MissionSession.programLines = [{ indent: 0, tokens: [] }];
+  MissionSession.activeLineIdx = 0;
+  BlockEditor.render();
+  updateCodePreview();
+  CodeEditor.clear();
+  if (MissionSession.missionState) {
+    MissionSession.missionState.codeExecuted = false;
+    MissionSession.missionState.objectiveCompleted = false;
+    MissionSession.missionState.checked = false;
+  }
+  document.getElementById("btn-complete").disabled = true;
+  document.getElementById("btn-check").disabled = true;
+  document.getElementById("check-panel").style.display = "none";
+  clearConsole(true);
+  const m = MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
+  resetScene(m);
+  if (m.type === "block") {
+    renderBlocks(m.blocks || []);
+    updateCodePreview();
   }
 }
-function resetWorkspace(){assembledBlocks=[];renderAssembly();updateCodePreview();document.getElementById("code-editor").value="";if(missionState){missionState.codeExecuted=false;missionState.objectiveCompleted=false}document.getElementById("btn-complete").disabled=true;document.getElementById("check-panel").style.display="none";clearConsole(true);const m=MISSIONS[currentWorld][currentMission-1];resetScene(m);if(m.type==="block"){renderBlocks(m.blocks||[]);updateCodePreview()}}
 
-function renderHintButtons(){const row=document.getElementById("hints-row");row.innerHTML="";for(let i=0;i<3;i++){const btn=document.createElement("button");const used=missionState&&missionState["hint"+(i+1)+"Used"];const locked=missionState&&i>0&&!missionState["hint"+i+"Used"];btn.className="btn btn-ghost hint-btn"+(used?" used":"")+(locked?" locked":"");btn.textContent=used?`💡 Подсказка ${i+1} ✓`:(locked?`🔒 Подсказка ${i+1}`:`💡 Подсказка ${i+1}`);btn.disabled=!!locked;btn.onclick=()=>showHint(i);row.appendChild(btn)}}
-function showHint(level){if(!missionState)return;if(level>0&&!missionState["hint"+level+"Used"]){showToast("Сначала открой предыдущую подсказку");return}const m=MISSIONS[currentWorld][currentMission-1];const hints=m.hints||["Подумай.","Проверь синтаксис.","Разбери на шаги."];let text=hints[level]||"Подумай ещё.";if(missionState.lastError){const s=missionState.lastError.toLowerCase();if(s.includes("nameerror")||s.includes("not defined")){const adaptive=["Проверь название переменной или функции.","Возможно опечатка в имени.","Сравни написание с заданием."][level];if(adaptive)text=adaptive+" "+text}else if(s.includes("syntax")){const adaptive=["Проверь скобки и кавычки.","Возможно не хватает символа.","Посмотри парность скобок и кавычек."][level];if(adaptive)text=adaptive+" "+text}}if(!missionState["hint"+(level+1)+"Used"]){missionState["hint"+(level+1)+"Used"]=true;missionState.hintsUsed=[missionState.hint1Used,missionState.hint2Used,missionState.hint3Used].filter(Boolean).length;missionState.hintLevel=Math.max(missionState.hintLevel,level+1);if(!missionState.firstHintAt)missionState.firstHintAt=Date.now();missionState.lastHintAt=Date.now();state.stats.hintsUsed++}renderHintButtons();updateMissionStatsBar();showToast("💡 "+text.split("\n")[0]);appendConsole("info","💡 Подсказка "+(level+1)+": "+text.replace(/\\n/g," "))}
+function renderHintButtons() {
+  const row = document.getElementById("hints-row");
+  row.innerHTML = "";
+  const ms = MissionSession.missionState;
+  for (let i = 0; i < 3; i++) {
+    const btn = document.createElement("button");
+    const used = ms && ms["hint" + (i + 1) + "Used"];
+    const locked = ms && i > 0 && !ms["hint" + i + "Used"];
+    btn.className = "btn btn-ghost hint-btn" + (used ? " used" : "") + (locked ? " locked" : "");
+    btn.textContent = used ? `💡 Подсказка ${i + 1} ✓` : (locked ? `🔒 Подсказка ${i + 1}` : `💡 Подсказка ${i + 1}`);
+    btn.disabled = !!locked;
+    btn.onclick = () => showHint(i);
+    row.appendChild(btn);
+  }
+}
 
-function clearConsole(silent){const body=document.getElementById("console-body");if(silent){body.innerHTML='<div class="console-line info">Консоль готова к запуску...</div>';document.getElementById("console-status").className="console-status idle";document.getElementById("console-status").textContent="Ожидание запуска"}}
-function appendConsole(cls,text){const body=document.getElementById("console-body");const div=document.createElement("div");div.className="console-line "+cls;div.textContent=text;body.appendChild(div);body.scrollTop=body.scrollHeight}
-function setConsoleStatus(type,text){const el=document.getElementById("console-status");el.className="console-status "+type;el.textContent=text}
+function showHint(level) {
+  const ms = MissionSession.missionState;
+  if (!ms) return;
+  if (level > 0 && !ms["hint" + level + "Used"]) {
+    showToast("Сначала открой предыдущую подсказку");
+    return;
+  }
+  const m = MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
+  const hints = m.hints || ["Подумай.", "Проверь синтаксис.", "Разбери на шаги."];
+  let text = hints[level] || "Подумай ещё.";
+  if (ms.lastError) {
+    const s = ms.lastError.toLowerCase();
+    if (s.includes("nameerror") || s.includes("not defined")) {
+      const adaptive = ["Проверь название переменной или функции.", "Возможно опечатка в имени.", "Сравни написание с заданием."][level];
+      if (adaptive) text = adaptive + " " + text;
+    } else if (s.includes("syntax")) {
+      const adaptive = ["Проверь скобки и кавычки.", "Возможно не хватает символа.", "Посмотри парность скобок и кавычек."][level];
+      if (adaptive) text = adaptive + " " + text;
+    }
+  }
+  if (!ms["hint" + (level + 1) + "Used"]) {
+    ms["hint" + (level + 1) + "Used"] = true;
+    ms.hintsUsed = [ms.hint1Used, ms.hint2Used, ms.hint3Used].filter(Boolean).length;
+    ms.hintLevel = Math.max(ms.hintLevel, level + 1);
+    if (!ms.firstHintAt) ms.firstHintAt = Date.now();
+    ms.lastHintAt = Date.now();
+    state.stats.hintsUsed++;
+  }
+  renderHintButtons();
+  updateMissionStatsBar();
+  showToast("💡 " + text.split("\n")[0]);
+  appendConsole("info", "💡 Подсказка " + (level + 1) + ": " + text.replace(/\\n/g, " "));
+}
 
-function runCode(){const m=MISSIONS[currentWorld][currentMission-1];const code=getCode();if(!code.trim()){showToast("Сначала собери или напиши код!");return}missionState.attempts++;state.stats.totalAttempts++;updateMissionStatsBar();const body=document.getElementById("console-body");body.innerHTML="";appendConsole("prompt",">>> Запуск...");setConsoleStatus("idle","Выполнение...");document.getElementById("check-panel").style.display="none";setTimeout(()=>{const result=PythonEngine.run(code,{setupVars:m.setupVars||{},simInput:m.simInput});if(result.status==="runtime_error"){missionState.errorsCount++;missionState.failedAttempts++;state.stats.errors++;missionState.lastError=result.stderr;if(result.stdout)result.stdout.split("\n").filter(Boolean).forEach(l=>appendConsole("stdout",l));appendConsole("stderr",result.stderr);appendConsole("info",explainError(result.stderr));setConsoleStatus("error","✗ Ошибка выполнения");document.getElementById("avatar").className="avatar sad";document.getElementById("avatar").textContent="😵";document.getElementById("scene-msg").textContent="Ошибка в коде. Исправь и попробуй снова!";missionState.objectiveCompleted=false;document.getElementById("btn-complete").disabled=true;playSound("err")}else{missionState.successfulAttempts++;state.stats.successfulAttempts++;missionState.lastError=null;const lines=(result.stdout||"").split("\n");if(!lines.length||(lines.length===1&&!lines[0]))appendConsole("info","(нет вывода)");else lines.forEach(l=>{if(l!==undefined)appendConsole("stdout",l)});appendConsole("ok","✓ Код выполнен");setConsoleStatus("success","✓ Выполнение завершено");missionState.codeExecuted=true;missionState.bestOutput=result.stdout;applyVisual(m,result);let passed=false;try{passed=m.check(result.stdout,result.vars)}catch(e){passed=false}const checkEl=document.getElementById("check-panel");checkEl.style.display="block";if(passed){missionState.objectiveCompleted=true;document.getElementById("btn-complete").disabled=false;document.getElementById("avatar").className="avatar happy";document.getElementById("avatar").textContent="🤩";document.getElementById("scene-msg").textContent="✅ Цель достигнута! Нажми «Завершить».";checkEl.innerHTML='<span class="ok">✓ Правильный результат · Все условия выполнены</span>';setConsoleStatus("success","✓ Код выполнен · Задание решено");playSound("ok");showToast("Цель выполнена!")}else{missionState.objectiveCompleted=false;document.getElementById("btn-complete").disabled=true;document.getElementById("avatar").className="avatar";document.getElementById("avatar").textContent="🤔";document.getElementById("scene-msg").textContent="Код выполнился, но цель ещё не достигнута.";checkEl.innerHTML='<span class="fail">✗ Результат не соответствует условию</span><br><span style="color:var(--muted);font-size:.75rem">Проверь задание и попробуй ещё раз</span>';setConsoleStatus("warn","✓ Код выполнен · ⚠ Проверь результат");playSound("run")}}updateMissionStatsBar()},120)}
+function clearConsole(silent) {
+  const body = document.getElementById("console-body");
+  if (silent) {
+    body.innerHTML = '<div class="console-line info">Консоль готова к запуску...</div>';
+    document.getElementById("console-status").className = "console-status idle";
+    document.getElementById("console-status").textContent = "Ожидание запуска";
+  }
+}
+function appendConsole(cls, text) {
+  const body = document.getElementById("console-body");
+  const div = document.createElement("div");
+  div.className = "console-line " + cls;
+  div.textContent = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function setConsoleStatus(type, text) {
+  const el = document.getElementById("console-status");
+  el.className = "console-status " + type;
+  el.textContent = text;
+}
 
-function explainError(stderr){if(!stderr)return"";const s=stderr.toLowerCase();if(s.includes("nameerror")||s.includes("not defined")){const name=(stderr.match(/'([^']+)'/)||[])[1]||"имя";return`→ «${name}» не существует. Проверь написание.`}if(s.includes("syntax"))return"→ Синтаксическая ошибка. Проверь скобки, кавычки и двоеточия.";return"→ Проверь код на опечатки и структуру."}
-function applyVisual(m,result){if(m.visual?.energy!==undefined||result.vars?.energy!==undefined){document.getElementById("energy-wrap").style.display="block";const v=m.visual?.energy??Number(result.vars.energy);document.getElementById("energy-fill").style.width=Math.min(100,v)+"%"}else document.getElementById("energy-wrap").style.display="none";const door=document.getElementById("door");if(m.visual?.door||(result.stdout&&/Open|Enter/i.test(result.stdout))){door.style.display="flex";if(/Open|Enter/i.test(result.stdout||""))door.classList.add("open");else door.classList.remove("open")}else door.style.display="none"}
-function resetScene(m){document.getElementById("scene-title").textContent=WORLD_META[currentWorld-1].name;document.getElementById("energy-wrap").style.display="none";document.getElementById("door").style.display="none";document.getElementById("door").classList.remove("open");document.getElementById("avatar").className="avatar";document.getElementById("avatar").textContent="🤖";document.getElementById("scene-msg").textContent="Выполни код, чтобы увидеть результат..."}
+function explainError(stderr) {
+  if (!stderr) return "";
+  const s = stderr.toLowerCase();
+  if (s.includes("nameerror") || s.includes("не определено") || s.includes("not defined")) {
+    const name = (stderr.match(/'([^']+)'/) || [])[1] || "имя";
+    return `→ «${name}» не существует. Проверь написание.`;
+  }
+  if (s.includes("syntax")) return "→ Синтаксическая ошибка. Проверь скобки, кавычки и двоеточия. Каждая команда — на своей строке.";
+  return "→ Проверь код на опечатки и структуру. Команды пишутся на отдельных строках.";
+}
 
-function completeMission(){if(!missionState||!missionState.objectiveCompleted){showToast("Сначала выполни цель через «Запустить»!");return}const m=ensureSkill(MISSIONS[currentWorld][currentMission-1],currentWorld);const key="w"+currentWorld+"m"+currentMission;const isReplay=!!state.completed[key];missionState.completedAt=Date.now();missionState.durationSeconds=Math.floor((missionState.completedAt-missionState.startedAt)/1000);missionState.completed=true;stopTimer();updateStreak();const reward=RewardEngine.calc(m,missionState);if(!isReplay){state.xp+=reward.xp;state.coins+=reward.coins;state.crystals+=reward.crystals;state.stars+=reward.stars;state.completed[key]=true;state.stats.missionsCompleted++;if(reward.firstTry)state.stats.firstTryWins++;if(reward.noHints)state.stats.noHintWins++;if(reward.noErrors)state.stats.noErrorWins++;if(reward.fast)state.stats.speedWins++;if(missionState.attempts>=10)state.stats.persistentWins++;if(m.difficulty==="boss")state.stats.bossesDefeated++;MasteryEngine.apply(m.skill,reward.masteryGain);if(countWorldDone(currentWorld)>=20&&state.unlockedWorld===currentWorld&&currentWorld<5)state.unlockedWorld=currentWorld+1}else{state.coins+=Math.floor(reward.coins*.15);MasteryEngine.apply(m.skill,Math.max(1,Math.floor(reward.masteryGain/3)))}state.missions[key]={attempts:missionState.attempts,hintsUsed:missionState.hintsUsed,duration:missionState.durationSeconds,bestCoins:reward.coins};const newAchs=AchievementEngine.checkAndUnlock();SaveManager.save(state);showCompletionModal(m,reward,isReplay,newAchs);newAchs.forEach((a,i)=>setTimeout(()=>AchievementEngine.showPopup(a),800+i*900));playSound("coin")}
+function runCode() {
+  const m = MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
+  const code = getCode();
+  if (!code.trim()) { showToast("Сначала собери или напиши код!"); return; }
+  const ms = MissionSession.missionState;
+  ms.attempts++;
+  state.stats.totalAttempts++;
+  updateMissionStatsBar();
+  const body = document.getElementById("console-body");
+  body.innerHTML = "";
+  appendConsole("prompt", ">>> Запуск...");
+  setConsoleStatus("idle", "Выполнение...");
+  document.getElementById("check-panel").style.display = "none";
+  document.getElementById("btn-check").disabled = true;
+  document.getElementById("btn-complete").disabled = true;
+  ms.objectiveCompleted = false;
+  ms.checked = false;
 
-function showCompletionModal(m,reward,isReplay,newAchs){const inner=document.getElementById("modal-inner");const masteryPct=state.mastery[m.skill]||0;const bonusHtml=reward.bonuses.map(b=>`<span class="bonus-tag">🏆 ${b}</span>`).join("");const achHtml=newAchs.length?newAchs.map(a=>`<div class="ach-unlock"><div class="title">🎖 ${a.icon} ${a.title}</div><div style="font-size:.8rem;color:var(--muted)">${a.desc}</div></div>`).join(""):"";inner.innerHTML=`<div style="font-size:2.4rem">${m.difficulty==="boss"?"👑":"🎉"}</div><h2>${isReplay?"Миссия переиграна!":"Миссия пройдена!"}</h2><div class="mission-name">${m.title}</div><div class="reward-grid"><div class="reward-item"><div class="val">+${isReplay?0:reward.xp}</div><div class="lbl">XP</div></div><div class="reward-item"><div class="val gold">+${isReplay?Math.floor(reward.coins*.15):reward.coins}</div><div class="lbl">🪙</div></div><div class="reward-item"><div class="val">+${isReplay?0:reward.crystals}</div><div class="lbl">💎</div></div><div class="reward-item"><div class="val">+${isReplay?0:reward.stars}</div><div class="lbl">⭐</div></div></div><div class="stats-grid"><div class="row"><span>⏱ Скорость</span><span>${formatTime(missionState.durationSeconds)}</span></div><div class="row"><span>🎯 Попытки</span><span>${missionState.attempts}</span></div><div class="row"><span>❌ Ошибки</span><span>${missionState.errorsCount}</span></div><div class="row"><span>💡 Подсказки</span><span>${missionState.hintsUsed} / 3</span></div><div class="row"><span>🔥 Серия</span><span>${state.streak||0}</span></div></div>${bonusHtml?`<div class="bonus-list">${bonusHtml}</div>`:""}${achHtml}<div class="mastery-mini"><div style="font-size:.8rem">Mastery · ${m.skill} · ${MasteryEngine.level(masteryPct)}</div><div class="bar-wrap"><div class="bar" style="width:${masteryPct}%"></div></div><div style="font-size:.75rem;color:var(--muted);margin-top:2px">${masteryPct}%</div></div><button class="btn btn-primary btn-lg" onclick="onContinue()" style="margin-top:12px;width:100%">Продолжить →</button>`;document.getElementById("modal").classList.add("show")}
+  setTimeout(() => {
+    const result = PythonEngine.run(code, { setupVars: m.setupVars || {}, simInput: m.simInput });
+    ms.lastResult = result;
+    if (result.status === "runtime_error") {
+      ms.errorsCount++;
+      ms.failedAttempts++;
+      state.stats.errors++;
+      ms.lastError = result.stderr;
+      if (result.stdout) result.stdout.split("\n").filter(Boolean).forEach(l => appendConsole("stdout", l));
+      appendConsole("stderr", result.stderr);
+      appendConsole("info", explainError(result.stderr));
+      setConsoleStatus("error", "✗ Ошибка выполнения");
+      document.getElementById("avatar").className = "avatar sad";
+      document.getElementById("avatar").textContent = "😵";
+      document.getElementById("scene-msg").textContent = "Ошибка в коде. Исправь и попробуй снова!";
+      playSound("err");
+    } else {
+      ms.successfulAttempts++;
+      state.stats.successfulAttempts++;
+      ms.lastError = null;
+      const lines = (result.stdout || "").split("\n");
+      if (!lines.length || (lines.length === 1 && !lines[0])) appendConsole("info", "(нет вывода)");
+      else lines.forEach(l => { if (l !== undefined) appendConsole("stdout", l); });
+      appendConsole("ok", "✓ Код выполнен");
+      setConsoleStatus("success", "✓ Выполнение завершено · нажми «Проверить задание»");
+      ms.codeExecuted = true;
+      ms.bestOutput = result.stdout;
+      applyVisual(m, result);
+      document.getElementById("btn-check").disabled = false;
+      document.getElementById("avatar").className = "avatar";
+      document.getElementById("avatar").textContent = "🤖";
+      document.getElementById("scene-msg").textContent = "Код выполнен. Нажми «✓ Проверить задание».";
+      playSound("run");
+    }
+    updateMissionStatsBar();
+  }, 120);
+}
 
-function onContinue(){document.getElementById("modal").classList.remove("show");if(countWorldDone(currentWorld)>=20){showWorldComplete();return}if(currentMission<20)openMission(currentWorld,currentMission+1);else showMap()}
-function showWorldComplete(){const w=WORLD_META[currentWorld-1];const next=WORLD_META[currentWorld];document.getElementById("modal-world-inner").innerHTML=`<div style="font-size:2.8rem">🏆</div><h2>WORLD COMPLETE</h2><p style="color:var(--muted);margin:8px 0 16px">Ты завершил ${w.emoji} ${w.name}!</p>${next&&currentWorld<5?`<p>Новый мир разблокирован:<br><strong>${next.emoji} ${next.name}</strong></p>`:"<p>Все доступные миры пройдены!</p>"}<button class="btn btn-primary btn-lg" onclick="closeWorldModal()" style="margin-top:16px;width:100%">Продолжить →</button>`;document.getElementById("modal-world").classList.add("show");playSound("ach")}
-function closeWorldModal(){document.getElementById("modal-world").classList.remove("show");showMap()}
-function resetProgress(){if(confirm("Сбросить весь прогресс?")){state=SaveManager.default();SaveManager.save(state);showToast("Прогресс сброшен.");showHome()}}
+function checkMission() {
+  const ms = MissionSession.missionState;
+  if (!ms || !ms.codeExecuted || !ms.lastResult) {
+    showToast("Сначала нажми «Запустить»");
+    return;
+  }
+  if (ms.lastResult.status === "runtime_error") {
+    showToast("Сначала исправь ошибку в коде");
+    return;
+  }
+  const m = MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
+  const result = ms.lastResult;
+  let passed = false;
+  try { passed = m.check(result.stdout, result.vars); } catch (e) { passed = false; }
+  ms.checked = true;
+  const checkEl = document.getElementById("check-panel");
+  checkEl.style.display = "block";
+  if (passed) {
+    ms.objectiveCompleted = true;
+    document.getElementById("btn-complete").disabled = false;
+    document.getElementById("avatar").className = "avatar happy";
+    document.getElementById("avatar").textContent = "🤩";
+    // Success pedagogy
+    const lineCount = (getCode().split("\n").filter(l => l.trim()).length);
+    let successMsg = "✅ Цель достигнута! Нажми «Завершить».";
+    if (lineCount >= 2 && /print/.test(getCode())) {
+      successMsg = `✅ Отлично! Ты написал ${lineCount} Python-команды на ${lineCount} отдельных строках.`;
+    }
+    if (/if\s/.test(getCode()) && /:\n\s+/.test(getCode() + "\n")) {
+      successMsg = "✅ Отлично! Команда внутри if имеет отступ — так Python понимает структуру.";
+    }
+    document.getElementById("scene-msg").textContent = successMsg;
+    checkEl.innerHTML = '<span class="ok">✓ Правильный результат · Все условия выполнены</span>';
+    setConsoleStatus("success", "✓ Задание решено");
+    playSound("ok");
+    showToast("Цель выполнена!");
+  } else {
+    ms.objectiveCompleted = false;
+    document.getElementById("btn-complete").disabled = true;
+    document.getElementById("avatar").className = "avatar";
+    document.getElementById("avatar").textContent = "🤔";
+    document.getElementById("scene-msg").textContent = "Код выполнился, но цель ещё не достигнута.";
+    checkEl.innerHTML = '<span class="fail">✗ Результат не соответствует условию</span><br><span style="color:var(--muted);font-size:.75rem">Проверь задание и попробуй ещё раз</span>';
+    setConsoleStatus("warn", "✓ Код выполнен · ⚠ Проверь результат");
+    playSound("run");
+  }
+}
 
-updateStreak();updateHomeStats();
+function applyVisual(m, result) {
+  if (m.visual?.energy !== undefined || result.vars?.energy !== undefined) {
+    document.getElementById("energy-wrap").style.display = "block";
+    const v = m.visual?.energy ?? Number(result.vars.energy);
+    document.getElementById("energy-fill").style.width = Math.min(100, v) + "%";
+  } else document.getElementById("energy-wrap").style.display = "none";
+  const door = document.getElementById("door");
+  if (m.visual?.door || (result.stdout && /Open|Enter/i.test(result.stdout))) {
+    door.style.display = "flex";
+    if (/Open|Enter/i.test(result.stdout || "")) door.classList.add("open");
+    else door.classList.remove("open");
+  } else door.style.display = "none";
+}
+
+function resetScene(m) {
+  document.getElementById("scene-title").textContent = WORLD_META[MissionSession.currentWorld - 1].name;
+  document.getElementById("energy-wrap").style.display = "none";
+  document.getElementById("door").style.display = "none";
+  document.getElementById("door").classList.remove("open");
+  document.getElementById("avatar").className = "avatar";
+  document.getElementById("avatar").textContent = "🤖";
+  document.getElementById("scene-msg").textContent = "Выполни код, чтобы увидеть результат...";
+}
+
+function completeMission() {
+  const ms = MissionSession.missionState;
+  if (!ms || !ms.objectiveCompleted) {
+    showToast("Сначала выполни цель: Запустить → Проверить задание");
+    return;
+  }
+  const m = ensureSkill(MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1], MissionSession.currentWorld);
+  const key = "w" + MissionSession.currentWorld + "m" + MissionSession.currentMission;
+  const isReplay = !!state.completed[key];
+  ms.completedAt = Date.now();
+  ms.durationSeconds = Math.floor((ms.completedAt - ms.startedAt) / 1000);
+  ms.completed = true;
+  MissionSession.stopTimer();
+  updateStreak();
+  const reward = RewardEngine.calc(m, ms);
+  if (!isReplay) {
+    state.xp += reward.xp;
+    state.coins += reward.coins;
+    state.crystals += reward.crystals;
+    state.stars += reward.stars;
+    state.completed[key] = true;
+    state.stats.missionsCompleted++;
+    if (reward.firstTry) state.stats.firstTryWins++;
+    if (reward.noHints) state.stats.noHintWins++;
+    if (reward.noErrors) state.stats.noErrorWins++;
+    if (reward.fast) state.stats.speedWins++;
+    if (ms.attempts >= 10) state.stats.persistentWins++;
+    if (m.difficulty === "boss") state.stats.bossesDefeated++;
+    MasteryEngine.apply(m.skill, reward.masteryGain);
+    if (countWorldDone(MissionSession.currentWorld) >= 20 && state.unlockedWorld === MissionSession.currentWorld && MissionSession.currentWorld < 5) {
+      state.unlockedWorld = MissionSession.currentWorld + 1;
+    }
+  } else {
+    state.coins += Math.floor(reward.coins * 0.15);
+    MasteryEngine.apply(m.skill, Math.max(1, Math.floor(reward.masteryGain / 3)));
+  }
+  state.missions[key] = {
+    attempts: ms.attempts,
+    hintsUsed: ms.hintsUsed,
+    duration: ms.durationSeconds,
+    bestCoins: reward.coins
+  };
+  const newAchs = AchievementEngine.checkAndUnlock();
+  persistState();
+  if (!AuthState.isAuthenticated) {
+    showToast("Войдите, чтобы сохранить прогресс в облаке");
+  }
+  showCompletionModal(m, reward, isReplay, newAchs);
+  newAchs.forEach((a, i) => setTimeout(() => AchievementEngine.showPopup(a), 800 + i * 900));
+  playSound("coin");
+}
+
+function showCompletionModal(m, reward, isReplay, newAchs) {
+  const ms = MissionSession.missionState;
+  const inner = document.getElementById("modal-inner");
+  const masteryPct = state.mastery[m.skill] || 0;
+  const bonusHtml = reward.bonuses.map(b => `<span class="bonus-tag">🏆 ${b}</span>`).join("");
+  const achHtml = newAchs.length
+    ? newAchs.map(a => `<div class="ach-unlock"><div class="title">🎖 ${a.icon} ${a.title}</div><div style="font-size:.8rem;color:var(--muted)">${a.desc}</div></div>`).join("")
+    : "";
+  inner.innerHTML = `<div style="font-size:2.4rem">${m.difficulty === "boss" ? "👑" : "🎉"}</div><h2>${isReplay ? "Миссия переиграна!" : "Миссия пройдена!"}</h2><div class="mission-name">${m.title}</div><div class="reward-grid"><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.xp}</div><div class="lbl">XP</div></div><div class="reward-item"><div class="val gold">+${isReplay ? Math.floor(reward.coins * 0.15) : reward.coins}</div><div class="lbl">🪙</div></div><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.crystals}</div><div class="lbl">💎</div></div><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.stars}</div><div class="lbl">⭐</div></div></div><div class="stats-grid"><div class="row"><span>⏱ Скорость</span><span>${formatTime(ms.durationSeconds)}</span></div><div class="row"><span>🎯 Попытки</span><span>${ms.attempts}</span></div><div class="row"><span>❌ Ошибки</span><span>${ms.errorsCount}</span></div><div class="row"><span>💡 Подсказки</span><span>${ms.hintsUsed} / 3</span></div><div class="row"><span>🔥 Серия</span><span>${state.streak || 0}</span></div></div>${bonusHtml ? `<div class="bonus-list">${bonusHtml}</div>` : ""}${achHtml}<div class="mastery-mini"><div style="font-size:.8rem">Mastery · ${m.skill} · ${MasteryEngine.level(masteryPct)}</div><div class="bar-wrap"><div class="bar" style="width:${masteryPct}%"></div></div><div style="font-size:.75rem;color:var(--muted);margin-top:2px">${masteryPct}%</div></div><button class="btn btn-primary btn-lg" onclick="onContinue()" style="margin-top:12px;width:100%">Продолжить →</button>`;
+  document.getElementById("modal").classList.add("show");
+}
+
+function onContinue() {
+  document.getElementById("modal").classList.remove("show");
+  if (countWorldDone(MissionSession.currentWorld) >= 20) {
+    showWorldComplete();
+    return;
+  }
+  if (MissionSession.currentMission < 20) openMission(MissionSession.currentWorld, MissionSession.currentMission + 1);
+  else showMap();
+}
+function showWorldComplete() {
+  const w = WORLD_META[MissionSession.currentWorld - 1];
+  const next = WORLD_META[MissionSession.currentWorld];
+  document.getElementById("modal-world-inner").innerHTML = `<div style="font-size:2.8rem">🏆</div><h2>WORLD COMPLETE</h2><p style="color:var(--muted);margin:8px 0 16px">Ты завершил ${w.emoji} ${w.name}!</p>${next && MissionSession.currentWorld < 5 ? `<p>Новый мир разблокирован:<br><strong>${next.emoji} ${next.name}</strong></p>` : "<p>Все доступные миры пройдены!</p>"}<button class="btn btn-primary btn-lg" onclick="closeWorldModal()" style="margin-top:16px;width:100%">Продолжить →</button>`;
+  document.getElementById("modal-world").classList.add("show");
+  playSound("ach");
+}
+function closeWorldModal() {
+  document.getElementById("modal-world").classList.remove("show");
+  showMap();
+}
+function resetProgress() {
+  if (!confirm("Сбросить весь прогресс текущего ученика?")) return;
+  state = SaveManager.default();
+  if (AuthState.currentStudent) {
+    state.studentId = AuthState.currentStudent.id;
+    persistState();
+  }
+  showToast("Прогресс сброшен.");
+  showHome();
+}
+
+/* Boot */
+CloudSaveManager.init();
+SaveManager.clearLegacyKeys();
+// Guest mode: default state until login
+state = SaveManager.default();
+updateStreak();
+updateHomeStats();
+updateAuthUI();
+// Restore session if any
+tryRestoreSession().then(() => {
+  updateHomeStats();
+  updateAuthUI();
+}).catch(() => {});
+
 </script>
 </body>
 </html>
