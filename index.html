@@ -293,7 +293,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 </div>
 
 <div id="screen-mission" class="screen">
-  <div class="mission-left">
+  <div class="mission-left" oncopy="return false;" oncontextmenu="return false;">
     <div class="mission-header">
       <div>
         <div class="mission-title" id="m-title">Миссия</div>
@@ -308,7 +308,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
       <div>💡 <span id="m-hints-used">0</span>/3</div>
     </div>
     <div class="story-box" id="m-story"></div>
-    <div class="objective-box" id="m-objective"></div>
+    <div class="objective-box" id="m-objective" ></div>
     <div class="workspace">
       <div class="mode-label" id="mode-label">Собери код из блоков <span class="reuse-badge">∞ блоки можно использовать многократно</span></div>
       <div id="block-area" style="display:flex;flex-direction:column;flex:1;min-height:0">
