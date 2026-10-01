@@ -122,8 +122,6 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 .toast.show{transform:translateX(-50%) translateY(0)}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,242,254,.3);border-radius:3px}
 @media(max-width:900px){#screen-mission{flex-direction:column}.mission-left,.mission-right{width:100%}.mission-left{height:55%;border-right:none;border-bottom:1px solid rgba(0,242,254,.15)}.mission-right{height:45%}.scene-area{max-height:30%;min-height:80px}.console-body{min-height:100px}.reward-grid{grid-template-columns:repeat(2,1fr)}}
-
-
 /* ===== v5: Line-based block editor & code editor ===== */
 .block-program{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding:6px;background:rgba(0,0,0,.35);border:2px dashed rgba(0,242,254,.22);border-radius:10px;min-height:80px}
 .block-program.drag-over{border-color:var(--cyan);background:rgba(0,242,254,.06)}
@@ -152,8 +150,6 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 .btn-check:hover{transform:translateY(-2px)}
 .btn-check:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
 .assembly-placeholder{color:var(--muted);font-size:.82rem;width:100%;text-align:center;padding:16px;pointer-events:none}
-
-
 /* Module Mastery Check */
 .mastery-q{background:rgba(0,0,0,.25);border:1px solid rgba(0,242,254,.15);border-radius:12px;padding:14px;margin-bottom:12px}
 .mastery-q .q-type{font-size:.65rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
@@ -170,7 +166,6 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 .concept-banner strong{color:var(--cyan)}
 .fail-guide{font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.4}
 .fail-guide strong{color:var(--warn)}
-
 /* ===== Commercial polish & educational enhancements ===== */
 .block-palette{position:relative}
 .block-palette::before{content:"Блоки можно использовать многократно ✨";display:block;font-size:.65rem;color:var(--muted);margin-bottom:6px;width:100%}
@@ -201,8 +196,6 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 .console-body{scrollbar-width:thin}
 .mission-header{backdrop-filter:blur(12px)}
 @media(max-width:900px){.block-palette::before{font-size:.6rem}}
-
-
 @media(max-width:900px){
   .block-line{flex-wrap:wrap;min-height:44px}
   .block-line-tokens{min-height:36px}
@@ -215,24 +208,19 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
   .actions .btn{flex:1 1 auto;min-height:44px;justify-content:center}
   .pedagogy-tip{font-size:.75rem}
 }
-
-
 .mq-code{background:#0a0f1c;border:1px solid rgba(0,242,254,.2);border-radius:8px;padding:10px;margin:0 0 10px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre;color:#e6f7ff}
 .mastery-q .q-text{white-space:pre-wrap}
 .mastery-opt{white-space:pre-wrap}
 .mastery-opt.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,.world-card:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-
 :focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 @media (pointer:coarse),(max-width:900px){.btn,.hint-btn,.block,button{min-height:44px;min-width:44px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-
 <div id="screen-home" class="screen active">
   <div class="home-card">
     <div style="font-size:2.6rem;margin-bottom:6px">🚀</div>
@@ -253,7 +241,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     </div>
     <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center">
       <button class="btn btn-ghost btn-sm" onclick="toggleSound()" id="btn-sound">🔊 Звук</button>
-      <button class="btn btn-ghost btn-sm" id="btn-reset-progress" onclick="resetProgress()" style="display:none">Сбросить</button>
+      <button
+        class="btn btn-ghost btn-sm"
+        id="btn-reset-progress"
+        /*onclick="resetProgress()" */
+        style="display:none" disabled>Сбросить</button>
       <button class="btn btn-ghost btn-sm" id="btn-login" onclick="openLoginModal()">🔐 Войти</button>
       <button class="btn btn-ghost btn-sm" id="btn-logout" onclick="logoutStudent()" style="display:none">🚪 Выйти</button>
       <span id="auth-status" style="font-size:.75rem;color:var(--muted)"></span>
