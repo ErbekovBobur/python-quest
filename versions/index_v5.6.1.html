@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="version" content="5.7">
+<meta name="version" content="5.6.1">
 <title>Python Quest Infinity</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
@@ -223,10 +223,6 @@ body{background:radial-gradient(ellipse at 20% 20%,#1a1d2e 0%,#0b0f19 60%)}
 .mastery-opt.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,.world-card:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
-
-:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
-@media (pointer:coarse),(max-width:900px){.btn,.hint-btn,.block,button{min-height:44px;min-width:44px}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -237,7 +233,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   <div class="home-card">
     <div style="font-size:2.6rem;margin-bottom:6px">🚀</div>
     <h1>Python Quest Infinity</h1>
-    <span style="font-size:.6rem;color:var(--muted)">Version 5.7</span>
+    <span style="font-size:.6rem;color:var(--muted)">Version 5.6.1</span>
     <p>Стань героем цифровой вселенной.<br>Изучай Python через миссии, боссов и открытия.<br><span style="font-size:.8rem;color:var(--cyan)">Блоки кода можно использовать сколько угодно раз — как настоящие команды!</span></p>
     <div class="home-stats">
       <div class="home-stat"><div class="val" id="home-xp">0</div><div class="lbl">XP</div></div>
@@ -264,7 +260,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 <div id="screen-map" class="screen">
   <div class="hud">
-    <div class="hud-left"><div class="logo">Python Quest v5.7</div><div class="rank-badge" id="map-rank">Python Novice</div></div>
+    <div class="hud-left"><div class="logo">Python Quest v5.6.1</div><div class="rank-badge" id="map-rank">Python Novice</div></div>
     <div class="hud-right">
       <div class="stat coins">🪙 <span id="map-coins">0</span></div>
       <div class="stat">⭐ <span id="map-stars">0</span></div>
@@ -460,7 +456,7 @@ const ACHIEVEMENTS=[
    Source of truth: Supabase. localStorage = student-scoped cache only.
 ============================================================================ */
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 3;
 
 const SaveManager = {
   default() {
@@ -475,44 +471,17 @@ const SaveManager = {
       mastery: Object.fromEntries(SKILL_KEYS.map(k => [k, 0])),
       achievements: [],
       masteryChecks: {},
-      skillStats: {},
       streak: 0, lastPlay: null, bestStreak: 0,
       stats: {
         totalAttempts: 0, successfulAttempts: 0, errors: 0, hintsUsed: 0,
         missionsCompleted: 0, firstTryWins: 0, noHintWins: 0, noErrorWins: 0,
-        speedWins: 0, persistentWins: 0, bossesDefeated: 0, perfectWorlds: 0,
-        predictions: 0, predictionsCorrect: 0
+        speedWins: 0, persistentWins: 0, bossesDefeated: 0, perfectWorlds: 0
       },
       settings: { sound: true }
     };
   },
-  /* Validates untrusted data (localStorage / cloud): types, ranges, key formats. */
-  sanitize(d) {
-    const num = (v, max) => { v = Number(v); return isFinite(v) && v > 0 ? Math.min(Math.floor(v), max) : 0; };
-    d.xp = num(d.xp, 1e6); d.coins = num(d.coins, 1e7); d.crystals = num(d.crystals, 1e5); d.stars = num(d.stars, 1e4);
-    d.unlockedWorld = Math.max(1, Math.min(WORLD_META.length, num(d.unlockedWorld, 1e3) || 1));
-    const okKey = k => /^w\d{1,2}m\d{1,3}$/.test(k);
-    const comp = {}; Object.keys(d.completed && typeof d.completed === "object" ? d.completed : {}).forEach(k => { if (okKey(k) && d.completed[k]) comp[k] = true; });
-    d.completed = comp;
-    const ms = {}; Object.keys(d.missions && typeof d.missions === "object" ? d.missions : {}).forEach(k => { if (okKey(k) && d.missions[k] && typeof d.missions[k] === "object") ms[k] = d.missions[k]; });
-    d.missions = ms;
-    const known = ACHIEVEMENTS.map(a => a.id);
-    d.achievements = Array.isArray(d.achievements) ? Array.from(new Set(d.achievements.filter(a => known.includes(a)))) : [];
-    const base = this.default().mastery;
-    Object.keys(base).forEach(k => { base[k] = Math.min(100, num(d.mastery && d.mastery[k], 100)); });
-    d.mastery = base;
-    const ss = {}, src = d.skillStats && typeof d.skillStats === "object" ? d.skillStats : {};
-    Object.keys(base).forEach(k => { if (src[k] && typeof src[k] === "object") { const o = {}; ["n","ft","nh","pn","po","tn","to","rn","ro"].forEach(f => { o[f] = num(src[k][f], 1e4); }); ss[k] = o; } });
-    d.skillStats = ss;
-    return d;
-  },
   migrate(raw) {
     const d = Object.assign(this.default(), raw || {});
-    const from = Number(raw && raw.schemaVersion) || 1;
-    // v1->v2: stats object; v2->v3: masteryChecks; v3->v4: sanitized/validated counters
-    if (from < 2 && (!d.stats || typeof d.stats !== "object")) d.stats = this.default().stats;
-    if (from < 3 && !d.masteryChecks) d.masteryChecks = {};
-    if (from < 4) { d.stats = Object.assign(this.default().stats, d.stats || {}); }
     d.schemaVersion = SCHEMA_VERSION;
     if (!d.stats) d.stats = this.default().stats;
     if (!d.mastery) d.mastery = this.default().mastery;
@@ -521,23 +490,7 @@ const SaveManager = {
     if (!d.missions) d.missions = {};
     if (!d.achievements) d.achievements = [];
     if (!d.masteryChecks) d.masteryChecks = {};
-    return this.sanitize(d);
-  },
-  /* Deterministic, monotonic merge: progress never decreases (no lost updates, no stale overwrite). */
-  merge(a, b) {
-    if (!a) return b; if (!b) return a;
-    const m = Object.assign({}, a.updatedAt > b.updatedAt ? a : b);
-    ["xp","coins","crystals","stars","unlockedWorld","streak","bestStreak"].forEach(k => { m[k] = Math.max(a[k] || 0, b[k] || 0); });
-    m.completed = Object.assign({}, a.completed, b.completed);
-    m.achievements = Array.from(new Set([].concat(a.achievements || [], b.achievements || [])));
-    m.skillStats = {};
-    Object.keys(Object.assign({}, a.skillStats, b.skillStats)).forEach(k => { const x = (a.skillStats || {})[k] || {}, y = (b.skillStats || {})[k] || {}, o = {}; ["n","ft","nh","pn","po","tn","to","rn","ro"].forEach(f => { o[f] = Math.max(x[f] || 0, y[f] || 0); }); m.skillStats[k] = o; });
-    m.mastery = {}; Object.keys(a.mastery).forEach(k => { const c = MasteryEngine.compute(m.skillStats[k]); m.mastery[k] = c != null ? c : Math.max(a.mastery[k] || 0, (b.mastery || {})[k] || 0); });
-    m.missions = Object.assign({}, b.missions, a.missions);
-    m.masteryChecks = Object.assign({}, b.masteryChecks, a.masteryChecks);
-    m.stats = {}; Object.keys(Object.assign({}, a.stats, b.stats)).forEach(k => { m.stats[k] = Math.max((a.stats || {})[k] || 0, (b.stats || {})[k] || 0); });
-    m.updatedAt = a.updatedAt > b.updatedAt ? a.updatedAt : b.updatedAt;
-    return this.sanitize(m);
+    return d;
   },
   cacheKey(studentId) {
     return studentId ? ("pqi_player_" + studentId) : null;
@@ -907,6 +860,156 @@ async function loginStudent(login, password) {
   }
 }
 
+/**
+ * Функция генерации палитры блоков.
+ * ДОБАВЛЕНО: Теперь она перемешивает блоки и добавляет дистракторы из миссии.
+ */
+function renderBlockPalette(mission) {
+  const palette = document.getElementById("block-palette");
+  if (!palette) return;
+  palette.innerHTML = "";
+  
+  // Берем правильные блоки + дистракторы (шум)
+  let allBlocks = [...mission.blocks];
+  if (mission.distractors && mission.distractors.length > 0) {
+    allBlocks = allBlocks.concat(mission.distractors);
+  }
+  
+  // Перемешиваем блоки, чтобы ученик не собирал их "по порядку"
+  allBlocks = allBlocks.sort(() => Math.random() - 0.5);
+  
+  // Рендерим в DOM (используем уже существующие у вас стили)
+  allBlocks.forEach(text => {
+    const el = document.createElement("div");
+    el.className = "block";
+    el.textContent = text;
+    el.draggable = true;
+    
+    // Присвоение классов подсветки синтаксиса для красоты
+    if(text === "print" || text === "input") el.classList.add("keyword");
+    else if(text.includes("\"") || text.includes("'")) el.classList.add("string");
+    else if(!isNaN(text)) el.classList.add("number");
+    
+    // ... здесь ваша существующая логика drag-and-drop ...
+    palette.appendChild(el);
+  });
+}
+
+/**
+ * ДОБАВЛЕНО: Функция показа концепции (теории) перед заданием.
+ */
+function setupPedagogyContext(mission) {
+  const tipContainer = document.getElementById("pedagogy-tip");
+  if (!tipContainer) return;
+  
+  if (mission.concept) {
+    tipContainer.innerHTML = `💡 <strong>Концепция:</strong> ${mission.concept}`;
+    tipContainer.style.display = "block";
+  } else {
+    tipContainer.style.display = "none";
+  }
+}
+
+/**
+ * ИЗМЕНЕНО: Обработка правильного решения.
+ * Вместо мгновенного завершения миссии, вызываем окно осмысления.
+ */
+function handleMissionSuccess(mission) {
+  const checkPanel = document.getElementById("check-panel");
+  if(checkPanel) {
+    checkPanel.style.display = "block";
+    checkPanel.innerHTML = "<div class='ok'>✓ Код отработал верно!</div>";
+  }
+  
+  // Если у миссии есть вопрос на понимание, блокируем кнопку "Завершить" и показываем вопрос
+  if (mission.masteryCheck) {
+    const btnComplete = document.getElementById("btn-complete");
+    if(btnComplete) btnComplete.disabled = true; // Заблокировано до ответа на вопрос
+    
+    showMasteryCheckModal(mission);
+  } else {
+    // Если вопроса нет (старые миссии), сразу разрешаем завершить
+    document.getElementById("btn-complete").disabled = false;
+  }
+}
+
+/**
+ * ДОБАВЛЕНО: Рендер модального окна проверки понимания.
+ * Использует ваши CSS классы `.mastery-q`, `.mastery-opt` из <style>.
+ */
+function showMasteryCheckModal(mission) {
+  const modal = document.getElementById("modal-mastery");
+  const inner = document.getElementById("modal-mastery-inner");
+  if (!modal || !inner) return;
+  
+  let optionsHtml = '';
+  // Перемешиваем варианты ответов
+  const shuffledOptions = [...mission.masteryCheck.options].sort(() => Math.random() - 0.5);
+  
+  shuffledOptions.forEach((opt, idx) => {
+    optionsHtml += `
+      <div class="mastery-opt" data-correct="${opt.correct}" onclick="selectMasteryOption(this)">
+        ${opt.text}
+      </div>
+    `;
+  });
+
+  inner.innerHTML = `
+    <div style="font-size:2rem;margin-bottom:8px;text-align:center;">🧠</div>
+    <h2 style="text-align:center;">Осмысление кода</h2>
+    <p style="color:var(--muted); font-size:0.85rem; text-align:center; margin-bottom:16px;">
+      Твой код сработал! Но понимаешь ли ты, почему?
+    </p>
+    <div class="mastery-q">
+      <div class="q-text"><strong>Вопрос:</strong> ${mission.masteryCheck.question}</div>
+      ${optionsHtml}
+      <div class="mastery-explain" id="mastery-explain-box">
+        <strong>Объяснение:</strong> ${mission.masteryCheck.explanation}
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:16px;">
+      <button class="btn btn-primary" id="btn-mastery-continue" disabled onclick="closeMasteryAndComplete()">Понятно, идем дальше!</button>
+    </div>
+  `;
+  
+  modal.classList.add("show");
+}
+
+/**
+ * ДОБАВЛЕНО: Логика выбора ответа в окне проверки понимания.
+ */
+window.selectMasteryOption = function(element) {
+  // Убираем предыдущие выделения
+  const allOpts = element.parentElement.querySelectorAll('.mastery-opt');
+  allOpts.forEach(el => el.classList.remove('selected', 'correct', 'wrong'));
+  
+  const isCorrect = element.getAttribute("data-correct") === "true";
+  
+  if (isCorrect) {
+    element.classList.add('correct');
+    document.getElementById("mastery-explain-box").classList.add("show");
+    document.getElementById("btn-mastery-continue").disabled = false;
+    // Опционально: звук успеха
+  } else {
+    element.classList.add('wrong');
+    element.classList.add('selected');
+    // Опционально: звук ошибки. Даем ученику выбрать другой вариант.
+  }
+};
+
+/**
+ * ДОБАВЛЕНО: Закрытие окна Mastery и активация финальной кнопки завершения.
+ */
+window.closeMasteryAndComplete = function() {
+  document.getElementById("modal-mastery").classList.remove("show");
+  const btnComplete = document.getElementById("btn-complete");
+  if(btnComplete) {
+    btnComplete.disabled = false;
+    // Можно подсветить кнопку завершения анимацией, чтобы привлечь внимание
+    btnComplete.classList.add("pulse"); 
+  }
+};
+
 function clearPlayerState(opts) {
   opts = opts || {};
   // 1. Stop timers
@@ -1158,7 +1261,6 @@ async function tryRestoreSession() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const cb = document.getElementById("console-body"); if (cb) { cb.setAttribute("role", "log"); cb.setAttribute("aria-live", "polite"); }
   const li = document.getElementById("login-input");
   const pi = document.getElementById("password-input");
   if (li) li.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("password-input").focus(); });
@@ -1169,229 +1271,118 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("offline", () => CloudSaveManager.setStatus("offline"));
 });
 
-
 const MISSIONS = {};
 
 /* ===== helpers for modules (output normalizer + required-construct check) ===== */
 function _pqN(out){ return String(out==null?"":out).replace(/\r/g,"").split("\n").map(function(s){return s.trim();}).join("\n").trim(); }
 function _pqR(v, pats){ var src=(v&&v.__src)||""; return pats.every(function(p){ return new RegExp(p).test(src); }); }
 
-
-
-/* ===== MODULE 1: Code City — print() ===== */
+/* ===== MODULE 1: Code City — print() [ПЕДАГОГИЧЕСКИ ИСПРАВЛЕННАЯ ВЕРСИЯ] ===== */
 MISSIONS[1] = [
   // 1-15 BLOCK
   {
-    id:1, type:"block", difficulty:"easy",
-    title:"Первый сигнал",
-    story:"Ты прибыл в Code City. Городской терминал молчит. Чтобы активировать его, нужно вывести приветствие.",
-    objective:"Выведи на экран текст: Hello",
-    blocks:["print","(","\"Hello\"",")"],
-    targetCode:"print(\"Hello\")",
-    check:(out,vars)=> out.includes("Hello"),
-    scene:"terminal",
-    hints:["Какая команда выводит текст?","Нужна команда print и скобки.","Порядок: print → ( → текст в кавычках → )"]
+    id: 1, type: "block", difficulty: "easy",
+    title: "Первый сигнал",
+    concept: "Команда <strong>print()</strong> приказывает компьютеру вывести информацию на экран. Текст внутри нее обязательно оборачивается в кавычки.",
+    story: "Ты прибыл в Code City. Городской терминал молчит. Чтобы активировать его, нужно заставить компьютер поздороваться.",
+    objective: "Выведи на экран текст: Hello",
+    blocks: ["print", "(", "\"Hello\"", ")"],
+    distractors: ["display", "write", "[", "]", "Hello"], // Когнитивная нагрузка: ученик должен сам отбросить 'display' и 'Hello' без кавычек
+    targetCode: "print(\"Hello\")",
+    check: (out) => out.includes("Hello"),
+    scene: "terminal",
+    hints: [
+      "Какова наша цель? Заставить терминал 'напечатать' сообщение.",
+      "В Python для этого используется команда print().",
+      "Собери блоки так: сначала команда, затем открывающая скобка, текст в кавычках, и закрывающая скобка."
+    ],
+    masteryCheck: {
+      question: "Почему слово \"Hello\" мы обернули в кавычки?",
+      options: [
+        { text: "Потому что это текст (строка), а не другая команда или переменная.", correct: true },
+        { text: "Потому что в Python абсолютно всё пишется в кавычках.", correct: false },
+        { text: "Кавычки нужны, чтобы текст был зеленого цвета.", correct: false }
+      ],
+      explanation: "Кавычки говорят Python: «Это просто текстовые данные, не пытайся выполнить их как команду»."
+    }
   },
   {
-    id:2, type:"block", difficulty:"easy",
-    title:"Приветствие города",
-    story:"Терминал заработал! Теперь поприветствуй весь город.",
-    objective:"Выведи: Welcome to Code City",
-    blocks:["print","(","\"Welcome to Code City\"",")"],
-    targetCode:"Собери одну команду print с нужной фразой в кавычках",
-    check:(out)=> out.includes("Welcome to Code City"),
-    scene:"city",
-    hints:["Используй print.","Текст должен быть в кавычках.","Собери команду из блоков палитры. Не копируй ответ — подумай, какие блоки нужны."]
+    id: 2, type: "block", difficulty: "easy",
+    title: "Приветствие города",
+    concept: "Внутри print() можно передавать целые фразы. Главное — чтобы кавычки открывались в начале фразы и закрывались в конце.",
+    story: "Терминал заработал! Теперь нужно передать сообщение по всем каналам.",
+    objective: "Выведи фразу: Welcome to Code City",
+    blocks: ["print", "(", "\"Welcome to Code City\"", ")"],
+    distractors: ["\"Welcome\"", "\"to\"", "Code City", "print()"], 
+    targetCode: "print(\"Welcome to Code City\")",
+    check: (out) => out.includes("Welcome to Code City"),
+    scene: "city",
+    hints: [
+      "Тебе нужен всего один блок со всей фразой.",
+      "Убедись, что фраза целиком находится внутри кавычек."
+    ],
+    masteryCheck: {
+      question: "Что произойдет, если мы забудем поставить закрывающую скобку ')' в конце?",
+      options: [
+        { text: "Python выдаст ошибку синтаксиса (SyntaxError), потому что команда не завершена.", correct: true },
+        { text: "Программа напечатает текст, но с ошибкой в конце.", correct: false },
+        { text: "Компьютер сам добавит скобку и всё сработает.", correct: false }
+      ],
+      explanation: "Программирование требует абсолютной точности. Незакрытая скобка ломает структуру команды."
+    }
   },
   {
-    id:3, type:"block", difficulty:"easy",
-    title:"Двойной сигнал",
-    story:"Система требует два сигнала подряд для синхронизации.",
-    objective:"Выведи сначала Python, потом Quest (два print)",
-    blocks:["print","(","\"Python\"",")","print","(","\"Quest\"",")"],
-    targetCode:"print(\"Python\")\nprint(\"Quest\")",
-    check:(out)=> out.includes("Python") && out.includes("Quest"),
-    scene:"sync",
-    hints:["Нужны две команды print.","Каждая на своей строке.","Первая строка — Python, вторая — Quest (две отдельные команды)"]
+    id: 3, type: "block", difficulty: "medium",
+    title: "Последовательность",
+    concept: "Python выполняет команды строго <strong>сверху вниз</strong>, строку за строкой. Порядок имеет значение.",
+    story: "Система требует два сигнала подряд для полной синхронизации.",
+    objective: "Выведи сначала Python, а на следующей строке Quest.",
+    blocks: ["print", "(", "\"Python\"", ")", "print", "(", "\"Quest\"", ")"],
+    distractors: ["+", "and", "\"Python Quest\""],
+    targetCode: "print(\"Python\")\nprint(\"Quest\")",
+    check: (out) => {
+      const lines = _pqN(out).split('\n');
+      return lines.length >= 2 && lines[0].includes("Python") && lines[1].includes("Quest");
+    },
+    scene: "sync",
+    hints: [
+      "Тебе нужно создать две отдельные строки кода.",
+      "Нажми '＋ Новая строка', чтобы добавить место для второй команды print()."
+    ],
+    masteryCheck: {
+      question: "Что будет, если поменять строки местами?",
+      options: [
+        { text: "Программа выведет сначала Quest, а потом Python, потому что код читается сверху вниз.", correct: true },
+        { text: "Ничего не изменится, результат будет тот же.", correct: false },
+        { text: "Будет ошибка, так как Python всегда должен идти первым.", correct: false }
+      ],
+      explanation: "Программа — это как рецепт. Компьютер выполняет шаги строго в том порядке, в котором ты их написал."
+    }
   },
   {
-    id:4, type:"block", difficulty:"easy",
-    title:"Числовой маяк",
-    story:"Маяк принимает только числа. Отправь код активации 42.",
-    objective:"Выведи число 42",
-    blocks:["print","(","42",")"],
-    targetCode:"print(42)",
-    check:(out)=> out.trim() === "42" || out.includes("42"),
-    scene:"beacon",
-    hints:["Числа в Python пишутся без кавычек.","Собери print со числом 42 в скобках."]
-  },
-  {
-    id:5, type:"block", difficulty:"easy",
-    title:"Эхо имени",
-    story:"Сканер личности просит твой позывной.",
-    objective:"Выведи: Coder",
-    blocks:["print","(","\"Coder\"",")"],
-    targetCode:"print(\"Coder\")",
-    check:(out)=> out.includes("Coder"),
-    scene:"scanner",
-    hints:["Нужны print и строка в кавычках.","Собери print со словом Coder в кавычках."]
-  },
-  {
-    id:6, type:"block", difficulty:"medium",
-    title:"Тройной код",
-    story:"Шлюз требует три слова: Open, The, Gate",
-    objective:"Три print: Open / The / Gate",
-    blocks:["print","(","\"Open\"",")","print","(","\"The\"",")","print","(","\"Gate\"",")"],
-    targetCode:"print(\"Open\")\nprint(\"The\")\nprint(\"Gate\")",
-    check:(out)=> ["Open","The","Gate"].every(w=>out.includes(w)),
-    scene:"gate",
-    hints:["Три отдельные команды print.","Порядок важен."]
-  },
-  {
-    id:7, type:"block", difficulty:"medium",
-    title:"Секретный пароль",
-    story:"На стене нацарапано: PASS-777. Выведи его точно.",
-    objective:"Выведи PASS-777",
-    blocks:["print","(","\"PASS-777\"",")"],
-    targetCode:"print(\"PASS-777\")",
-    check:(out)=> out.includes("PASS-777"),
-    scene:"wall",
-    hints:["Строка в кавычках.","Собери print с точным текстом пароля в кавычках."]
-  },
-  {
-    id:8, type:"block", difficulty:"medium",
-    title:"Координаты",
-    story:"Навигатор ждёт координаты X и Y.",
-    objective:"Выведи 10, затем 20",
-    blocks:["print","(","10",")","print","(","20",")"],
-    targetCode:"print(10)\nprint(20)",
-    check:(out)=> out.includes("10") && out.includes("20"),
-    scene:"nav",
-    hints:["Два print с числами."]
-  },
-  {
-    id:9, type:"block", difficulty:"medium",
-    title:"Сообщение боссу",
-    story:"Отправь боссу статус: Ready",
-    objective:"Выведи Ready",
-    blocks:["print","(","\"Ready\"",")"],
-    targetCode:"print(\"Ready\")",
-    check:(out)=> out.includes("Ready"),
-    scene:"bossmsg",
-    hints:["Простой print."]
-  },
-  {
-    id:10, type:"block", difficulty:"medium",
-    title:"Мультисигнал",
-    story:"Антенна принимает четыре сигнала: A B C D",
-    objective:"Четыре print: A, B, C, D",
-    blocks:["print","(","\"A\"",")","print","(","\"B\"",")","print","(","\"C\"",")","print","(","\"D\"",")"],
-    targetCode:"print(\"A\")\nprint(\"B\")\nprint(\"C\")\nprint(\"D\")",
-    check:(out)=> ["A","B","C","D"].every(c=>out.includes(c)),
-    scene:"antenna",
-    hints:["Четыре команды print подряд."]
-  },
-  {
-    id:11, type:"block", difficulty:"hard",
-    title:"Точный протокол",
-    story:"Протокол требует точный вывод: START-OK-END",
-    objective:"Выведи START-OK-END одной командой",
-    blocks:["print","(","\"START-OK-END\"",")"],
-    targetCode:"print(\"START-OK-END\")",
-    check:(out)=> out.includes("START-OK-END"),
-    scene:"protocol",
-    hints:["Одна строка целиком."]
-  },
-  {
-    id:12, type:"block", difficulty:"hard",
-    title:"Числовой код доступа",
-    story:"Дверь открывается кодом 100, затем 200, затем 300.",
-    objective:"Три print: 100 200 300",
-    blocks:["print","(","100",")","print","(","200",")","print","(","300",")"],
-    targetCode:"print(100)\nprint(200)\nprint(300)",
-    check:(out)=> ["100","200","300"].every(n=>out.includes(n)),
-    scene:"door",
-    hints:["Три числа без кавычек."]
-  },
-  {
-    id:13, type:"block", difficulty:"hard",
-    title:"Финальный сигнал города",
-    story:"Перед выходом выведи: Code City Online",
-    objective:"Выведи Code City Online",
-    blocks:["print","(","\"Code City Online\"",")"],
-    targetCode:"print(\"Code City Online\")",
-    check:(out)=> out.includes("Code City Online"),
-    scene:"exit",
-    hints:["Точная строка."]
-  },
-  {
-    id:14, type:"block", difficulty:"boss",
-    title:"BOSS: Страж терминала",
-    story:"Страж требует полный лог: Hello, Python, 42, Ready",
-    objective:"Четыре print: Hello / Python / 42 / Ready",
-    blocks:["print","(","\"Hello\"",")","print","(","\"Python\"",")","print","(","42",")","print","(","\"Ready\"",")"],
-    targetCode:"print(\"Hello\")\nprint(\"Python\")\nprint(42)\nprint(\"Ready\")",
-    check:(out)=> ["Hello","Python","42","Ready"].every(x=>out.includes(x)),
-    scene:"boss",
-    hints:["Четыре команды.","Порядок: Hello, Python, 42, Ready"]
-  },
-  {
-    id:15, type:"block", difficulty:"boss",
-    title:"BOSS: Архитектор сигнала",
-    story:"Архитектор проверяет мастерство: выведи Quest, Infinity, 2025",
-    objective:"Три print: Quest / Infinity / 2025",
-    blocks:["print","(","\"Quest\"",")","print","(","\"Infinity\"",")","print","(","2025",")"],
-    targetCode:"print(\"Quest\")\nprint(\"Infinity\")\nprint(2025)",
-    check:(out)=> ["Quest","Infinity","2025"].every(x=>out.includes(x)),
-    scene:"architect",
-    hints:["Три команды print."]
-  },
-  // 16-20 CODE
-  {
-    id:16, type:"code", difficulty:"easy",
-    title:"Свободный привет",
-    story:"Теперь пиши код сам. Терминал ждёт твоё имя героя.",
-    objective:"Выведи любое приветствие, содержащее слово Hero",
-    targetHint:"print(\"Hero\")",
-    check:(out)=> out.toLowerCase().includes("hero"),
-    scene:"free",
-    hints:["Используй print(\"...\")","Внутри кавычек должно быть слово Hero"]
-  },
-  {
-    id:17, type:"code", difficulty:"medium",
-    title:"Двойной вывод",
-    story:"Система требует два сообщения: Start и Finish",
-    objective:"Два print: Start и Finish",
-    check:(out)=> out.includes("Start") && out.includes("Finish"),
-    scene:"dual",
-    hints:["Две строки print.","print(\"Start\")\\nprint(\"Finish\")"]
-  },
-  {
-    id:18, type:"code", difficulty:"medium",
-    title:"Число + текст",
-    story:"Смешанный сигнал: сначала 99, потом OK",
-    objective:"print(99) затем print(\"OK\")",
-    check:(out)=> out.includes("99") && out.includes("OK"),
-    scene:"mix",
-    hints:["Число без кавычек, текст с кавычками."]
-  },
-  {
-    id:19, type:"code", difficulty:"hard",
-    title:"Полный лог",
-    story:"Собери лог: Python, Quest, Infinity",
-    objective:"Три print с этими словами",
-    check:(out)=> ["Python","Quest","Infinity"].every(w=>out.includes(w)),
-    scene:"log",
-    hints:["Три отдельные команды."]
-  },
-  {
-    id:20, type:"code", difficulty:"boss",
-    title:"BOSS CODE: Финал Code City",
-    story:"Финальный экзамен города. Выведи: Hello Python 42 Ready",
-    objective:"Четыре print: Hello, Python, 42, Ready",
-    check:(out)=> ["Hello","Python","42","Ready"].every(x=>out.includes(x)),
-    scene:"final",
-    hints:["Вспомни все предыдущие миссии."]
+    id: 4, type: "block", difficulty: "easy",
+    title: "Числовой маяк",
+    concept: "Числа — это другой тип данных (Integer). В отличие от текста (String), <strong>числа пишутся без кавычек</strong>.",
+    story: "Маяк принимает только числовые частоты. Отправь код активации 42.",
+    objective: "Выведи число 42",
+    blocks: ["print", "(", "42", ")"],
+    distractors: ["\"42\"", "number", "forty-two"],
+    targetCode: "print(42)",
+    check: (out) => out.trim() === "42",
+    scene: "beacon",
+    hints: [
+      "Вспомни, как мы передаем числа компьютеру.",
+      "Для чисел кавычки не нужны! Используй блок числа без кавычек."
+    ],
+    masteryCheck: {
+      question: "В чем разница между 42 (без кавычек) и \"42\" (в кавычках) для компьютера?",
+      options: [
+        { text: "42 — это число, с ним можно делать математику. \"42\" — это просто символ текста.", correct: true },
+        { text: "Разницы нет, компьютер понимает их одинаково.", correct: false },
+        { text: "Число без кавычек вызывает ошибку.", correct: false }
+      ],
+      explanation: "Для нас они выглядят одинаково, но для компьютера 42 — это математический объект, а \"42\" — просто рисунок из двух символов."
+    }
   }
 ];
 
@@ -8481,12 +8472,8 @@ function resolveLoaded(data) {
   const cached = SaveManager.loadCache(data.id);
   let loaded = cloud, pushBack = false;
   if (cached && cached.studentId === data.id) {
-    if (!cloud) { loaded = cached; pushBack = true; }
-    else {
-      loaded = SaveManager.merge(cloud, cached);
-      pushBack = JSON.stringify([loaded.xp, loaded.coins, Object.keys(loaded.completed).length, loaded.achievements.length]) !==
-                 JSON.stringify([cloud.xp, cloud.coins, Object.keys(cloud.completed).length, cloud.achievements.length]);
-    }
+    if (!cloud) loaded = cached;
+    else if (cached.updatedAt && cloud.updatedAt && cached.updatedAt > cloud.updatedAt) { loaded = cached; pushBack = true; }
   }
   if (!loaded) loaded = SaveManager.default();
   loaded.studentId = data.id;
@@ -8866,182 +8853,6 @@ function shuffle(arr) {
   return a;
 }
 
-/* ===== DistractorEngine: wrong-but-plausible blocks so the student must CHOOSE, not just order ===== */
-const DistractorEngine = {
-  NAMES: { print: "display", input: "read", for: "foreach", while: "until", if: "when", elif: "elseif", def: "function", return: "give", len: "length", range: "rang", append: "add", True: "true", False: "false", int: "integer", str: "string", sort: "order", "=": "==", "==": "=" },
-  KW: { print: "display", def: "function", for: "foreach", while: "until", if: "when", elif: "elseif", return: "give", import: "include", class: "Class", except: "catch", try: "attempt" },
-  /* whole-line blocks: one typical beginner slip (wrong keyword, missing colon, unclosed bracket, = vs ==) */
-  lineVariant(b) {
-    const w = b.split(/[\s(:]/)[0];
-    if (Object.prototype.hasOwnProperty.call(this.KW, w)) return this.KW[w] + b.slice(w.length);
-    if (/:$/.test(b)) return b.slice(0, -1);
-    if (/\)$/.test(b)) return b.slice(0, -1);
-    if (/^[A-Za-z_]\w* = [^=]/.test(b)) return b.replace(" = ", " == ");
-    return null;
-  },
-  augment(blocks) {
-    const have = new Set(blocks), add = [];
-    const push = x => { if (add.length < 2 && x && !have.has(x) && add.indexOf(x) < 0) add.push(x); };
-    blocks.forEach(b => { if (Object.prototype.hasOwnProperty.call(this.NAMES, b)) push(this.NAMES[b]); });
-    blocks.forEach(b => { const q = /^"([^"]*)"$|^'([^']*)'$/.exec(b); if (q) { const t = q[1] != null ? q[1] : q[2]; if (/^[A-Za-z_]\w*$/.test(t)) push(t); } });
-    if (have.has("(")) push("["); if (have.has(":")) push(";");
-    if (add.length < 2) blocks.forEach(b => { if (add.length < 2 && /[\s(]/.test(b) && b.length > 2) push(this.lineVariant(b)); });
-    return blocks.concat(add);
-  }
-};
-
-/* ===== HintEngine: L1 guiding question -> L2 syntax scaffold -> L3 fill-in template (never the finished code) ===== */
-const HintEngine = {
-  T: {
-    print: ["Какая функция выводит текст в консоль и что нужно передать ей в скобках?","Вспомни синтаксис: имя_функции(значение). Что здесь имя функции, а что значение?"],
-    for: ["Сколько раз нужно повторить действие и что именно повторяется?","Вспомни синтаксис: for переменная in range(сколько): — и тело цикла с отступом."],
-    while: ["Когда цикл должен остановиться и что меняется на каждом шаге?","Вспомни синтаксис: while условие: — и тело с отступом, где условие со временем становится ложным."],
-    if: ["Что нужно проверить и какие бывают два исхода?","Вспомни синтаксис: if условие: действие, затем else: действие (оба с отступом)."],
-    def: ["Что должна делать функция и какие данные ей нужны?","Вспомни синтаксис: def имя(параметры): тело с отступом; затем отдельный вызов имя(значения)."],
-    input: ["Откуда программа берёт данные и в какую переменную их сохранить?","Вспомни синтаксис: переменная = input(подсказка); input() всегда возвращает строку."],
-    gen: ["Какой результат нужен в конце и какие шаги к нему ведут?","Запиши шаги по порядку: каждая строка — одно действие. Что идёт первым?"]
-  },
-  blank(code) {
-    return code.split("\n").filter(l => l.trim() && l.trim()[0] !== "#").map(l => {
-      const ind = l.match(/^\s*/)[0].length ? "⇥ " : "", t = l.trim();
-      let r = t.replace(/(?:\b[fF])?("[^"]*"|'[^']*')/g, "___").replace(/\b\d+(\.\d+)?\b/g, "___");
-      if (r === t) {                                   // nothing literal to hide -> hide an argument or the assigned name
-        if (/\(([^()]+)\)\s*$/.test(t)) r = t.replace(/\(([^()]+)\)\s*$/, "(___)");
-        else if (/^[A-Za-z_]\w*(?= =)/.test(t)) r = t.replace(/^[A-Za-z_]\w*/, "___");
-      }
-      return ind + r;
-    }).join(" ⏎ ");
-  },
-  get(m) {
-    if (m.__hints) return m.__hints;
-    const code = String(m.targetCode || "");
-    const isCode = !!code && !/[А-Яа-яЁё]{3,}/.test(code.replace(/"[^"]*"|'[^']*'/g, ""));   // some targetCode fields are prose, not code
-    const lines = (isCode ? code : "").split("\n").map(x => x.trim()).filter(x => x && x[0] !== "#");
-    const leaks = h => lines.length > 0 && lines.every(l => h.indexOf(l) >= 0);
-    const kind = /\bdef\b/.test(code) ? "def" : /\bfor\b/.test(code) ? "for" : /\bwhile\b/.test(code) ? "while" : /\bif\b/.test(code) ? "if" : /\binput\(/.test(code) ? "input" : /\bprint\(/.test(code) ? "print" : "gen";
-    const T = this.T[kind], raw = (m.hints || []).map(String);
-    const h1 = (raw[0] && /\?\s*$/.test(raw[0]) && !leaks(raw[0])) ? raw[0] : T[0];
-    const extra = raw[1] && !leaks(raw[1]) && raw[1] !== h1 ? " ↳ " + raw[1] : "";
-    const bl = isCode ? this.blank(code) : "";
-    const h3 = (isCode && !leaks(bl)) ? "Шаблон с пропусками (___ — вставь сам; ⇥ отступ, ⏎ новая строка): " + bl : "Разбей решение на 2–3 коротких шага и проверь каждый запуском.";
-    m.__hints = [h1, T[1] + extra, h3]; return m.__hints;
-  }
-};
-
-/* ===== PredictionEngine: Predict -> Run -> Explain. Also reused for spaced retrieval ===== */
-const PredictionEngine = {
-  eligible(m, code) {
-    if (!m || m.type === "debug" || m.type === "boss") return false;
-    const w = MissionSession.currentWorld, id = MissionSession.currentMission;
-    if (w < 2 || (w * 7 + id) % 3 !== 0) return false;
-    return !/\binput\s*\(/.test(code) && !m.simInput;
-  },
-  options(out) {
-    if (!out || out.length > 160) return null;
-    const L = out.split("\n"), c = new Set();
-    if (L.length > 1) { c.add(L.slice().reverse().join("\n")); c.add(L.slice(0, -1).join("\n")); }
-    c.add(out.replace(/\d+/, n => String(+n + 1)));
-    c.add(out.slice(0, -1));
-    c.add(out === out.toUpperCase() ? out.toLowerCase() : out.toUpperCase());
-    c.add(out + "\n" + L[L.length - 1]);
-    c.delete(out); c.delete("");
-    const d = Array.from(c).slice(0, 3);
-    if (d.length < 2) return null;
-    return [{ t: out, ok: true }].concat(d.map(t => ({ t: t, ok: false }))).sort(() => Math.random() - 0.5);
-  },
-  explain(code) {
-    const p = ["Python выполняет строки сверху вниз, каждый print даёт отдельную строку вывода."];
-    if (/\bfor\b|\bwhile\b/.test(code)) p.push("Цикл повторяет своё тело: каждый проход — новое выполнение строк с отступом.");
-    if (/\bif\b/.test(code)) p.push("Условие выбирает ветку: выполняется только та, где условие истинно.");
-    if (/\bdef\b/.test(code)) p.push("def лишь объявляет функцию; тело работает при вызове.");
-    return p.join(" ");
-  },
-  ask(m, code, ms, cfg) {
-    cfg = cfg || {};
-    return new Promise(done => {
-      PyRuntime.run(code, { setupVars: m.setupVars || {}, simInput: m.simInput }).then(r => {
-        if (!r || r.status === "runtime_error" || r.engine === "legacy") return done(false);
-        const out = String(r.stdout || "").replace(/\r/g, "").replace(/\s+$/, "");
-        const opts = this.options(out);
-        if (!opts) return done(false);
-        this.show(code, out, opts, ms || {}, done, cfg);
-      }).catch(() => done(false));
-    });
-  },
-  show(code, out, opts, ms, done, cfg) {
-    const ov = document.createElement("div");
-    ov.className = "modal-overlay show"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-labelledby", "pred-h");
-    const box = document.createElement("div"); box.className = "modal"; ov.appendChild(box);
-    const h = document.createElement("h2"); h.id = "pred-h"; h.textContent = cfg.title || "🔮 Предскажи результат"; box.appendChild(h);
-    const q = document.createElement("p"); q.textContent = cfg.intro || "Что выведет твоя программа? Подумай до запуска — потом сравним."; box.appendChild(q);
-    if (cfg.showCode) { const pre = document.createElement("pre"); pre.style.cssText = "text-align:left;background:rgba(0,0,0,.35);padding:8px;border-radius:8px;overflow:auto"; pre.textContent = code; box.appendChild(pre); }
-    const fb = document.createElement("div"); fb.setAttribute("aria-live", "polite"); fb.style.cssText = "margin:10px 0;min-height:1.4em";
-    let wrong = 0, closed = false;
-    const finish = (record) => {
-      if (closed) return; closed = true;
-      const ok = wrong === 0;
-      if (record) { if (cfg.record) cfg.record(ok); else { ms.predictFirstTry = ok; ProgressService.recordPrediction(ok, cfg.skill); } }
-      ov.remove(); done(!!record);
-    };
-    opts.forEach((o, i) => {
-      const b = document.createElement("button"); b.className = "btn btn-ghost"; b.style.cssText = "display:block;width:100%;text-align:left;margin:6px 0;white-space:pre-wrap;font-family:monospace";
-      b.textContent = String.fromCharCode(65 + i) + ")  " + o.t;
-      b.onclick = () => {
-        if (o.ok) {
-          fb.textContent = "✓ Верно. " + this.explain(code);
-          box.querySelectorAll("button.btn-ghost").forEach(x => x.disabled = true);
-          const go = document.createElement("button"); go.className = "btn btn-primary"; go.textContent = cfg.cta || "▶ Запустить и сравнить"; go.onclick = () => finish(true); box.appendChild(go); go.focus();
-        } else {
-          wrong++; b.disabled = true; b.textContent = "✕ " + b.textContent;
-          fb.textContent = wrong === 1 ? "✕ Не совсем. Пройди по строкам сверху вниз: что делает КАЖДАЯ строка и сколько строк вывода получится?"
-            : "✕ Ещё не то. Проверь: что именно попадает в вывод и в каком порядке? Сравни оставшиеся варианты построчно.";
-        }
-      };
-      box.appendChild(b);
-    });
-    box.appendChild(fb);
-    const skip = document.createElement("button"); skip.className = "btn btn-ghost"; skip.textContent = "Не уверен(а) — пропустить"; skip.onclick = () => finish(false); box.appendChild(skip);
-    ov.addEventListener("keydown", e => { if (e.key === "Escape") finish(false); });
-    document.body.appendChild(ov); box.querySelector("button").focus();
-  }
-};
-
-/* ===== RetrievalEngine: once per session, recall a program from an EARLIER world (spaced retrieval) ===== */
-const RetrievalEngine = {
-  done: false,
-  maybe(worldId) {
-    if (this.done || worldId < 3 || !state || !state.completed) return;
-    const pool = [];
-    Object.keys(state.completed).forEach(k => {
-      const mt = /^w(\d+)m(\d+)$/.exec(k); if (!mt || +mt[1] >= worldId) return;
-      const m = MISSIONS[+mt[1]] && MISSIONS[+mt[1]][+mt[2] - 1];
-      if (m && m.targetCode && m.type !== "debug" && m.type !== "boss" && !/\binput\s*\(/.test(m.targetCode) && !m.simInput) pool.push([+mt[1], m]);
-    });
-    if (!pool.length) return;
-    this.done = true;
-    const pick = pool[Math.floor(Math.random() * pool.length)], w = pick[0], m = ensureSkill(pick[1], w);
-    PredictionEngine.ask(m, m.targetCode, {}, {
-      title: "🔁 Вспомни пройденное", intro: "Программа из мира «" + (WORLD_META[w - 1] || {}).name + "». Что она выведет?", showCode: true, cta: "Понятно",
-      record: ok => MasteryEngine.recordSignal(m.skill, "retr", ok)
-    }).then(shown => { if (shown) persistState(); });
-  }
-};
-
-const ProgressService = {
-  _add(k, n) { n = Math.floor(Number(n)); if (!isFinite(n) || n <= 0) return 0; state[k] = (state[k] || 0) + n; return n; },
-  addXP(n) { return this._add("xp", n); },
-  awardCoins(n) { return this._add("coins", n); },
-  addCrystals(n) { return this._add("crystals", n); },
-  addStars(n) { return this._add("stars", n); },
-  awardMission(r) { this.addXP(r.xp); this.awardCoins(r.coins); this.addCrystals(r.crystals); this.addStars(r.stars); },
-  recordHint() { state.stats.hintsUsed++; },
-  recordPrediction(ok, skill) { state.stats.predictions = (state.stats.predictions || 0) + 1; state.stats.predictionsCorrect = (state.stats.predictionsCorrect || 0) + (ok ? 1 : 0); if (skill) MasteryEngine.recordSignal(skill, "pred", ok); },
-  recordError() { state.stats.errors++; },
-  recordAttempt(ok) { state.stats.totalAttempts++; if (ok) state.stats.successfulAttempts++; },
-  completeMission(key) { state.completed[key] = true; state.stats.missionsCompleted++; },
-  unlockedModule() { return state.unlockedWorld; }
-};
-
 const RewardEngine = {
   calc(m, ms) {
     const base = { easy: 50, medium: 75, hard: 110, boss: 200 };
@@ -9056,13 +8867,12 @@ const RewardEngine = {
     const fast = false; // speed is intentionally NOT rewarded: understanding > speed
     if (firstTry) { coins += 30; bonuses.push("First Try"); }
     if (noErrors) { coins += 25; bonuses.push("No Errors"); }
-    if (noHints) { coins = Math.round(coins * 1.2); bonuses.push("No Hints (+20% монет)"); }
+    if (noHints) { coins += 30; bonuses.push("No Hints"); }
     else if (ms.hintLevel === 1) coins += 15;
     else if (ms.hintLevel === 2) coins += 5;
     if (fast) { coins += 10; bonuses.push("Speed Bonus"); }
     if (ms.hintLevel >= 3) xp = Math.max(5, xp - 8);
     else if (ms.hintLevel >= 2) xp = Math.max(8, xp - 4);
-    if (ms.predictFirstTry) { xp = Math.round(xp * 1.15); bonuses.push("Верный прогноз (+15% XP)"); }
     let masteryGain = noHints ? 12 : (ms.hintLevel === 1 ? 8 : (ms.hintLevel === 2 ? 5 : 3));
     if (m.difficulty === "boss") masteryGain += 5;
     return { xp, coins, crystals, stars, bonuses, masteryGain: Math.min(20, masteryGain), firstTry, noErrors, noHints, fast };
@@ -9070,37 +8880,16 @@ const RewardEngine = {
 };
 
 const MasteryEngine = {
-  /* M = .30*first_try + .25*no_hints + .20*prediction + .15*transfer + .10*retrieval (weights renormalised over
-     signals that have data), scaled by evidence confidence min(1, n/6) so 1-2 lucky missions can't mean "mastered". */
-  compute(st) {
-    if (!st || !st.n) return null;
-    const sig = [[.30, st.ft / st.n], [.25, st.nh / st.n]];
-    if (st.pn) sig.push([.20, st.po / st.pn]); if (st.tn) sig.push([.15, st.to / st.tn]); if (st.rn) sig.push([.10, st.ro / st.rn]);
-    const w = sig.reduce((a, x) => a + x[0], 0), v = sig.reduce((a, x) => a + x[0] * x[1], 0) / w;
-    return Math.max(0, Math.min(100, Math.round(100 * v * Math.min(1, st.n / 6))));
-  },
-  _st(skill) {
-    if (!skill || !state.mastery.hasOwnProperty(skill)) return null;
-    if (!state.skillStats) state.skillStats = {};
-    return state.skillStats[skill] || (state.skillStats[skill] = { n: 0, ft: 0, nh: 0, pn: 0, po: 0, tn: 0, to: 0, rn: 0, ro: 0 });
-  },
-  record(skill, ms) {            // first completion of a mission
-    const st = this._st(skill); if (!st) return;
-    st.n++; if (ms.attempts === 1) st.ft++; if (ms.hintsUsed === 0) st.nh++;
-    state.mastery[skill] = this.compute(st);
-  },
-  recordSignal(skill, kind, ok) { // kind: pred | retr | transfer
-    const st = this._st(skill); if (!st) return;
-    const f = { pred: ["pn", "po"], retr: ["rn", "ro"], transfer: ["tn", "to"] }[kind]; if (!f) return;
-    st[f[0]]++; if (ok) st[f[1]]++;
-    const c = this.compute(st); if (c != null) state.mastery[skill] = c;
+  apply(skill, gain) {
+    if (!skill || !state.mastery.hasOwnProperty(skill)) return;
+    state.mastery[skill] = Math.min(100, (state.mastery[skill] || 0) + gain);
   },
   level(pct) {
-    if (pct >= 90) return "Mastered · освоено";
-    if (pct >= 70) return "Proficient · уверенно";
-    if (pct >= 45) return "Developing · развивается";
-    if (pct >= 15) return "Practicing · практика";
-    return "Introduced · знакомство";
+    if (pct >= 90) return "Мастер";
+    if (pct >= 70) return "Продвинутый";
+    if (pct >= 50) return "Уверенный";
+    if (pct >= 25) return "Практик";
+    return "Новичок";
   },
   worldMastery(id) {
     const s = WORLD_META[id - 1]?.skill;
@@ -9117,8 +8906,8 @@ const AchievementEngine = {
         if (ach.check(state)) {
           state.achievements.push(ach.id);
           if (ach.reward) {
-            if (ach.reward.coins) ProgressService.awardCoins(ach.reward.coins);
-            if (ach.reward.crystals) ProgressService.addCrystals(ach.reward.crystals);
+            if (ach.reward.coins) state.coins += ach.reward.coins;
+            if (ach.reward.crystals) state.crystals += ach.reward.crystals;
           }
           newly.push(ach);
         }
@@ -9126,17 +8915,13 @@ const AchievementEngine = {
     }
     return newly;
   },
-  _q: [], _busy: false,
-  showPopup(ach) { this._q.push(ach); this._next(); },   // max one popup at a time, queued
-  _next() {
-    if (this._busy || !this._q.length) return;
-    this._busy = true; const ach = this._q.shift();
+  showPopup(ach) {
     const el = document.getElementById("ach-popup");
     document.getElementById("ach-popup-icon").textContent = ach.icon;
     document.getElementById("ach-popup-name").textContent = ach.title;
     document.getElementById("ach-popup-desc").textContent = ach.desc + (ach.reward?.coins ? " +" + ach.reward.coins + " 🪙" : "");
     el.classList.add("show");
-    setTimeout(() => { el.classList.remove("show"); setTimeout(() => { this._busy = false; this._next(); }, 400); }, 3500);
+    setTimeout(() => el.classList.remove("show"), 3500);
     playSound("ach");
   }
 };
@@ -9270,7 +9055,6 @@ function renderDashboard() {
 }
 
 function openWorld(worldId) {
-  setTimeout(() => { try { RetrievalEngine.maybe(worldId); } catch (e) {} }, 500);
   if (!MISSIONS[worldId]) { showToast("Мир в разработке"); return; }
   if (isWorldLocked(worldId)) {
     showToast(AuthState.isAuthenticated ? "Мир закрыт администратором" : "Войдите, чтобы открыть другие миры");
@@ -9285,6 +9069,7 @@ function openWorld(worldId) {
     start = m.id;
   }
   openMission(worldId, start);
+  setupPedagogyContext(currentMission);
 }
 
 function openMission(worldId, missionId) {
@@ -9461,12 +9246,6 @@ function getBlockTip(b) {
 function renderBlocks(blocks) {
   const palette = document.getElementById("block-palette");
   palette.innerHTML = "";
-  const withD = DistractorEngine.augment(blocks);
-  if (withD.length > blocks.length) {
-    const note = document.createElement("div"); note.style.cssText = "flex-basis:100%;width:100%;font-size:.75rem;color:var(--muted)";
-    note.textContent = "🧩 Среди блоков есть лишние — выбери только те, что нужны программе."; palette.appendChild(note);
-  }
-  blocks = withD;
   const seen = new Set();
   const unique = [];
   for (const b of blocks) {
@@ -9562,7 +9341,7 @@ function showHint(level) {
     return;
   }
   const m = MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
-  const hints = HintEngine.get(m);
+  const hints = m.hints || ["Подумай.", "Проверь синтаксис.", "Разбери на шаги."];
   let text = hints[level] || "Подумай ещё.";
   if (ms.lastError) {
     const s = ms.lastError.toLowerCase();
@@ -9580,7 +9359,7 @@ function showHint(level) {
     ms.hintLevel = Math.max(ms.hintLevel, level + 1);
     if (!ms.firstHintAt) ms.firstHintAt = Date.now();
     ms.lastHintAt = Date.now();
-    ProgressService.recordHint();
+    state.stats.hintsUsed++;
   }
   renderHintButtons();
   updateMissionStatsBar();
@@ -9610,40 +9389,29 @@ function setConsoleStatus(type, text) {
   el.textContent = text;
 }
 
-const ErrorDiagnosisEngine = {
-  T: [
-    [/timeout/i, "Программа работает слишком долго (TimeoutError)", "Скорее всего цикл не заканчивается.", ["Меняется ли внутри цикла переменная из условия?", "Может ли условие когда-нибудь стать ложным?"]],
-    [/indentation|indent/i, "Ошибка отступов (IndentationError)", "Python по отступам понимает, какие строки внутри блока.", ["Какие строки должны быть внутри if/for/while/def, а какие снаружи?", "Одинаков ли отступ у строк одного блока (обычно 4 пробела)?"]],
-    [/nameerror|не определено|not defined/i, "Ошибка имени (NameError)", "Интерпретатор встретил имя «{n}», которое ещё не было создано.", ["Объявлена ли «{n}» выше по коду, до первого использования?", "Нет ли опечатки или другого регистра («X» и «x» — разные имена)?"]],
-    [/syntax/i, "Ошибка записи (SyntaxError)", "Python не смог прочитать строку: нарушено правило записи.", ["Все ли скобки и кавычки закрыты?", "Есть ли «:» после if / for / while / def?"]],
-    [/typeerror/i, "Несовместимые типы (TypeError)", "Операция применена к значениям неподходящих типов или с неверным числом аргументов.", ["Какого типа каждое значение в этой строке (число или строка)?", "Нужно ли привести тип через int() или str()?"]],
-    [/valueerror/i, "Неподходящее значение (ValueError)", "Тип верный, но значение не подходит по смыслу (например, int(\"abc\")).", ["Что именно передаётся в функцию?", "Можно ли это значение преобразовать так, как ты хочешь?"]],
-    [/attributeerror/i, "Нет такого метода (AttributeError)", "У этого объекта нет такого метода или поля.", ["Какого типа объект и какие методы у него есть?", "Правильно ли написано имя метода?"]],
-    [/indexerror/i, "Индекс вне диапазона (IndexError)", "Элемента с таким номером нет.", ["Сколько элементов в списке или строке?", "Индексы начинаются с 0 — какой последний?"]],
-    [/keyerror/i, "Нет такого ключа (KeyError)", "В словаре нет этого ключа.", ["Как точно написан ключ (регистр, кавычки)?", "Можно ли использовать .get() вместо []?"]],
-    [/zerodivision|division/i, "Деление на ноль (ZeroDivisionError)", "Делитель оказался равен нулю.", ["Чему равен знаменатель на момент деления?", "Нужна ли проверка перед делением?"]]
-  ],
-  explain(stderr) {
-    if (!stderr) return "";
-    const n = (stderr.match(/'([^']+)'/) || [])[1] || "имя", ln = (String(stderr).match(/line (\d+)/i) || [])[1];
-    for (const t of this.T) if (t[0].test(stderr)) {
-      return "📍 " + t[1] + (ln ? " · строка " + ln : "") + "\n" + t[2].replace("{n}", n) + "\n💡 Проверь:\n1. " + t[3][0].replace("{n}", n) + "\n2. " + t[3][1].replace("{n}", n) + "\nИсправь и запусти снова — ошибки это часть обучения.";
-    }
-    return "📍 Ошибка выполнения" + (ln ? " · строка " + ln : "") + "\nПрочитай сообщение: оно показывает ЧТО случилось и ГДЕ.\n💡 Проверь:\n1. Что ты ожидал(а) на этой строке?\n2. Что произошло на самом деле?";
-  }
-};
-function explainError(stderr) { return ErrorDiagnosisEngine.explain(stderr); }
+function explainError(stderr) {
+  if (!stderr) return "";
+  const s = stderr.toLowerCase();
+  const name = (stderr.match(/'([^']+)'/) || [])[1] || "имя";
+  if (s.includes("timeouterror")) return "→ Программа работала слишком долго. Проверь цикл: меняется ли внутри то, от чего зависит условие? Есть ли выход из цикла?";
+  if (s.includes("indentationerror") || s.includes("indent")) return "→ Ошибка отступа. Тело if/for/while/def должно быть сдвинуто вправо (обычно на 4 пробела), а строки одного блока — на одинаковую величину.";
+  if (s.includes("nameerror") || s.includes("не определено") || s.includes("not defined")) return `→ Имя «${name}» не найдено. Проверь: 1) нет ли опечатки, 2) значение присвоено ДО использования, 3) текст записан в кавычках.`;
+  if (s.includes("syntaxerror") || s.includes("syntax")) return "→ Ошибка записи: проверь парность скобок () и кавычек, двоеточие : после if/for/while/def и отступы. Номер строки указан в сообщении.";
+  if (s.includes("typeerror")) return "→ Несовместимые типы или неверное число аргументов (например, число + строка). Приведи типы: int(...), str(...), или проверь вызов функции.";
+  if (s.includes("valueerror")) return "→ Значение подходит по типу, но не по смыслу (например, int(\"abc\")). Проверь, что именно передаёшь в функцию.";
+  if (s.includes("attributeerror")) return "→ У этого объекта нет такого метода/поля. Проверь тип значения и написание имени метода.";
+  if (s.includes("indexerror")) return "→ Индекс вне диапазона. Индексы идут с 0, последний — len(...) - 1.";
+  if (s.includes("keyerror")) return "→ Такого ключа нет в словаре. Проверь написание ключа или используй .get().";
+  if (s.includes("zerodivision") || s.includes("division")) return "→ Деление на ноль. Проверь знаменатель до деления.";
+  return "→ Прочитай сообщение об ошибке и номер строки: они показывают, ЧТО случилось и ГДЕ. Исправь эту строку и запусти снова.";
+}
+
 function runCode() {
   const m = MISSIONS[MissionSession.currentWorld][MissionSession.currentMission - 1];
   const code = getCode();
   if (!code.trim()) { showToast("Сначала собери или напиши код!"); return; }
   const ms = MissionSession.missionState;
   if (ms.running) { showToast("Код ещё выполняется…"); return; }
-  if (!ms.predictDone && PredictionEngine.eligible(m, code)) {
-    ms.running = true;
-    PredictionEngine.ask(m, code, ms, { skill: ensureSkill(m, MissionSession.currentWorld).skill }).then(() => { ms.running = false; ms.predictDone = true; if (MissionSession.missionState === ms) runCode(); });
-    return;
-  }
   ms.running = true;
   ms.attempts++;
   state.stats.totalAttempts++;
@@ -9669,7 +9437,7 @@ function runCode() {
     if (result.status === "runtime_error") {
       ms.errorsCount++;
       ms.failedAttempts++;
-      ProgressService.recordError();
+      state.stats.errors++;
       ms.lastError = result.stderr;
       if (result.stdout) result.stdout.split("\n").filter(Boolean).forEach(l => appendConsole("stdout", l));
       appendConsole("stderr", result.stderr);
@@ -9803,18 +9571,23 @@ function completeMission() {
   updateStreak();
   const reward = RewardEngine.calc(m, ms);
   if (!isReplay) {
-    ProgressService.awardMission(reward);
-    ProgressService.completeMission(key);
+    state.xp += reward.xp;
+    state.coins += reward.coins;
+    state.crystals += reward.crystals;
+    state.stars += reward.stars;
+    state.completed[key] = true;
+    state.stats.missionsCompleted++;
     if (reward.firstTry) state.stats.firstTryWins++;
     if (reward.noHints) state.stats.noHintWins++;
     if (reward.noErrors) state.stats.noErrorWins++;
     if (reward.fast) state.stats.speedWins++;
     if (ms.attempts >= 10) state.stats.persistentWins++;
     if (m.difficulty === "boss") state.stats.bossesDefeated++;
-    MasteryEngine.record(m.skill, ms);
+    MasteryEngine.apply(m.skill, reward.masteryGain);
     tryUnlockNextWorld(MissionSession.currentWorld);
   } else {
-    ProgressService.awardCoins(Math.floor(reward.coins * 0.15));
+    state.coins += Math.floor(reward.coins * 0.15);
+    MasteryEngine.apply(m.skill, Math.max(1, Math.floor(reward.masteryGain / 3)));
   }
   state.missions[key] = {
     attempts: ms.attempts,
@@ -9840,7 +9613,7 @@ function showCompletionModal(m, reward, isReplay, newAchs) {
   const achHtml = newAchs.length
     ? newAchs.map(a => `<div class="ach-unlock"><div class="title">🎖 ${a.icon} ${a.title}</div><div style="font-size:.8rem;color:var(--muted)">${a.desc}</div></div>`).join("")
     : "";
-  inner.innerHTML = `<div style="font-size:2.4rem">${m.difficulty === "boss" ? "👑" : "🎉"}</div><h2>${isReplay ? "Миссия переиграна!" : "Миссия пройдена!"}</h2><div class="mission-name">${m.title}</div><div class="reward-grid"><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.xp}</div><div class="lbl">XP</div></div><div class="reward-item"><div class="val gold">+${isReplay ? Math.floor(reward.coins * 0.15) : reward.coins}</div><div class="lbl">🪙</div></div><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.crystals}</div><div class="lbl">💎</div></div><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.stars}</div><div class="lbl">⭐</div></div></div><div class="stats-grid"><div class="row"><span>⏱ Время (не влияет на награду)</span><span>${formatTime(ms.durationSeconds)}</span></div><div class="row"><span>🎯 Попытки</span><span>${ms.attempts}</span></div><div class="row"><span>🔁 Ошибки — часть обучения</span><span>${ms.errorsCount}</span></div><div class="row"><span>💡 Подсказки</span><span>${ms.hintsUsed} / 3</span></div><div class="row"><span>🔥 Серия</span><span>${state.streak || 0}</span></div></div>${bonusHtml ? `<div class="bonus-list">${bonusHtml}</div>` : ""}${achHtml}<div class="mastery-mini"><div style="font-size:.8rem">Mastery · ${m.skill} · ${MasteryEngine.level(masteryPct)}</div><div class="bar-wrap"><div class="bar" style="width:${masteryPct}%"></div></div><div style="font-size:.75rem;color:var(--muted);margin-top:2px">${masteryPct}%</div></div><div style="font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.4;text-align:left;padding:8px;background:rgba(0,242,254,.06);border-radius:8px">💡 <strong>Что закрепил:</strong> ${escapeHtml(m.skill || "python")} — цель «${escapeHtml((m.objective||"").slice(0,80))}». Умеешь ли объяснить, <em>почему</em> вывод такой? Это важнее монет.</div><button class="btn btn-primary btn-lg" onclick="onContinue()" style="margin-top:12px;width:100%">Продолжить →</button>`;
+  inner.innerHTML = `<div style="font-size:2.4rem">${m.difficulty === "boss" ? "👑" : "🎉"}</div><h2>${isReplay ? "Миссия переиграна!" : "Миссия пройдена!"}</h2><div class="mission-name">${m.title}</div><div class="reward-grid"><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.xp}</div><div class="lbl">XP</div></div><div class="reward-item"><div class="val gold">+${isReplay ? Math.floor(reward.coins * 0.15) : reward.coins}</div><div class="lbl">🪙</div></div><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.crystals}</div><div class="lbl">💎</div></div><div class="reward-item"><div class="val">+${isReplay ? 0 : reward.stars}</div><div class="lbl">⭐</div></div></div><div class="stats-grid"><div class="row"><span>⏱ Скорость</span><span>${formatTime(ms.durationSeconds)}</span></div><div class="row"><span>🎯 Попытки</span><span>${ms.attempts}</span></div><div class="row"><span>❌ Ошибки</span><span>${ms.errorsCount}</span></div><div class="row"><span>💡 Подсказки</span><span>${ms.hintsUsed} / 3</span></div><div class="row"><span>🔥 Серия</span><span>${state.streak || 0}</span></div></div>${bonusHtml ? `<div class="bonus-list">${bonusHtml}</div>` : ""}${achHtml}<div class="mastery-mini"><div style="font-size:.8rem">Mastery · ${m.skill} · ${MasteryEngine.level(masteryPct)}</div><div class="bar-wrap"><div class="bar" style="width:${masteryPct}%"></div></div><div style="font-size:.75rem;color:var(--muted);margin-top:2px">${masteryPct}%</div></div><div style="font-size:.78rem;color:var(--muted);margin-top:10px;line-height:1.4;text-align:left;padding:8px;background:rgba(0,242,254,.06);border-radius:8px">💡 <strong>Что закрепил:</strong> ${escapeHtml(m.skill || "python")} — цель «${escapeHtml((m.objective||"").slice(0,80))}». Умеешь ли объяснить, <em>почему</em> вывод такой? Это важнее монет.</div><button class="btn btn-primary btn-lg" onclick="onContinue()" style="margin-top:12px;width:100%">Продолжить →</button>`;
   document.getElementById("modal").classList.add("show");
 }
 
@@ -10360,7 +10133,7 @@ const MasteryCheck = {
       passed, score, total: this.queue.length, weak, strong, at: new Date().toISOString()
     };
     if (passed) {
-      MasteryEngine.recordSignal(bank.skill, "transfer", true);
+      MasteryEngine.apply(bank.skill, 15);
       state.stats.perfectWorlds = (state.stats.perfectWorlds || 0) + (score === this.queue.length ? 1 : 0);
     }
     persistState();
@@ -10456,19 +10229,7 @@ tryRestoreSession().then(() => {
   updateHomeStats();
   updateAuthUI();
 }).catch(() => {});
-</script>
-<script>
-/* Multi-tab safety: when another tab saves for the SAME student, merge (never overwrite) */
-window.addEventListener("storage", function (e) {
-  try {
-    if (!AuthState.isAuthenticated || !AuthState.currentStudent || !e.key) return;
-    if (e.key !== SaveManager.cacheKey(AuthState.currentStudent.id) || !e.newValue) return;
-    const other = SaveManager.migrate(JSON.parse(e.newValue));
-    if (other.studentId !== AuthState.currentStudent.id) return;
-    state = SaveManager.merge(state, other);
-    updateHomeStats(); updateMapHud();
-  } catch (_) {}
-});
+
 </script>
 </body>
 </html>
